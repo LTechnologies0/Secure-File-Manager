@@ -16,21 +16,37 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/settings_lock"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/summary_text"
+        style="@style/AppIntroDefaultText"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:paddingStart="@dimen/activity_margin"
+        android:paddingEnd="@dimen/activity_margin"
+        android:text="@string/intro_lock_summary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/title" />
 
     <TextView
-        android:id="@+id/summary_text"
+        android:id="@+id/warning_text"
         style="@style/AppIntroWarningText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/intro_lock_warning"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/settings_lock" />
+        app:layout_constraintTop_toBottomOf="@+id/summary_text" />
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/configure_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/activity_margin"
+        android:contentDescription="@string/intro_configure"
+        android:text="@string/intro_configure"
+        app:icon="@drawable/ic_settings_vector"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/warning_text" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

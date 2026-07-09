@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ponytail: shared cross-app banner — sync structure in OKC/Oversec -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/openkeychain_required_banner"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:visibility="gone"
+    app:cardBackgroundColor="?attr/colorPrimaryContainer"
+    app:cardCornerRadius="@dimen/m3_corner_card"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="@dimen/m3_min_touch_target"
+        android:orientation="horizontal"
+        android:paddingHorizontal="@dimen/m3_spacing_md"
+        android:paddingVertical="@dimen/m3_spacing_sm">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@null"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_lock_vector"
+            app:tint="?attr/colorOnPrimaryContainer" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/openkeychain_banner_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/m3_spacing_sm"
+            android:layout_weight="1"
+            android:text="@string/openkeychain_required_banner"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textColor="?attr/colorOnPrimaryContainer" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/openkeychain_banner_action"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/m3_min_touch_target"
+            android:text="@string/m3_banner_install"
+            android:textColor="?attr/colorOnPrimaryContainer" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

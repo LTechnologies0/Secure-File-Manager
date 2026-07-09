@@ -1,5 +1,5 @@
 <resources>
-    <dimen name="normal_text_size">18sp</dimen>
-    <dimen name="big_text_size">22sp</dimen>
-    <dimen name="extra_big_text_size">26sp</dimen>
+    <dimen name="activity_margin">24dp</dimen>
+    <dimen name="big_margin">32dp</dimen>
+    <dimen name="file_picker_icon_size">64dp</dimen>
 </resources>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="@dimen/m3_spacing_lg">
+
+    <ImageView
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:alpha="0.55"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_package_vector_normal"
+        app:tint="?attr/colorOnSurfaceVariant" />
+
+    <TextView
+        android:id="@+id/items_empty_title"
+        style="@style/M3.SectionTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/m3_spacing_md"
+        android:gravity="center"
+        android:text="@string/folder_empty"
+        android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+
+    <TextView
+        android:id="@+id/items_empty_subtitle"
+        style="@style/M3.BodySecondary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/m3_spacing_sm"
+        android:gravity="center"
+        android:text="@string/items_empty_subtitle" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/items_empty_cta"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/m3_spacing_lg"
+        android:minHeight="@dimen/m3_min_touch_target"
+        android:text="@string/create_new" />
+</LinearLayout>

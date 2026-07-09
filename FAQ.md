@@ -74,7 +74,11 @@ These requirements are designed for a better user experience.
 
 ### How are my files encrypted?
 
-We use the [androidx.security.crypto](https://developer.android.com/reference/androidx/security/crypto/package-summary) library, more precisely [EncryptedFile](https://developer.android.com/reference/androidx/security/crypto/EncryptedFile) to encrypt your files. We are using AES256-GCM without padding as a key to encrypt your files. If it's available, the StrongBox security chip is used. The key is stored in the [Android](https://developer.android.com/training/articles/keystore) keystore. If you are more curious you can check the source code.
+New file encryption uses **[OpenKeychain](https://www.openkeychain.org/)** (OpenPGP). Install OpenKeychain, then use **Encrypt with OpenKeychain** from the file menu. Decryption of `.gpg`/`.pgp`/`.asc` files is also handled by OpenKeychain.
+
+Older **`.aes`** files were encrypted with the Android Keystore via this app. They are no longer encrypted by the app. Use **Settings → Encryption → Migrate legacy .aes files** to decrypt them, then re-encrypt with OpenKeychain if needed.
+
+Password-protected **ZIP** archives still use AES encryption inside the zip (via Zip4j), separate from OpenKeychain.
 
 ### Where can I request a new feature?
 

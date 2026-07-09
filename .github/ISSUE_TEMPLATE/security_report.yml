@@ -1,0 +1,29 @@
+name: Security report
+description: Report a security vulnerability (prefer private advisory)
+title: "[Security]: "
+labels: ["security"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **For sensitive issues, use [Private vulnerability reporting](https://github.com/LTechnologies0/Secure-File-Manager/security/advisories/new) instead.**
+
+        Do not include real passwords, PINs, or file contents in this form.
+  - type: input
+    id: version
+    attributes:
+      label: Affected version
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact (file exposure, encryption bypass, app-lock bypass, etc.)
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true

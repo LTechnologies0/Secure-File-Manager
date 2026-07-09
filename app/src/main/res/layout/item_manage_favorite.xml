@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/manage_favorite_holder"
+    style="@style/Widget.App.ListCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
+    android:layout_marginHorizontal="@dimen/m3_spacing_md"
+    android:layout_marginVertical="@dimen/m3_spacing_xs"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="@drawable/selector"
-    android:padding="@dimen/activity_margin">
+    android:foreground="?attr/selectableItemBackground">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/manage_favorite_title"
+        style="@style/M3.ListItemTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_marginLeft="@dimen/medium_margin"
-        android:layout_marginTop="@dimen/medium_margin"
-        android:layout_marginRight="@dimen/medium_margin" />
+        android:padding="@dimen/activity_margin" />
 
-</RelativeLayout>
+</com.google.android.material.card.MaterialCardView>

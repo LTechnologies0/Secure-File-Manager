@@ -8,37 +8,43 @@
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/items_swipe_refresh"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
         <RelativeLayout
             android:id="@+id/items_wrapper"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
 
-            <TextView
+            <include
                 android:id="@+id/items_empty"
+                layout="@layout/items_empty"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_centerVertical="true"
-                android:gravity="center"
-                android:text="@string/folder_empty"
-                android:textSize="@dimen/extra_big_text_size"
-                android:textStyle="bold"
-                android:visibility="invisible"
-                app:drawableTopCompat="@drawable/ic_package_vector_normal" />
+                android:visibility="invisible" />
 
-            <com.securefilemanager.app.views.Breadcrumbs
+            <ltechnologies.onionphone.securefilemanager.views.Breadcrumbs
                 android:id="@+id/breadcrumbs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="@dimen/activity_margin" />
+                android:paddingHorizontal="@dimen/small_margin"
+                android:paddingVertical="@dimen/tiny_margin" />
+
+            <include
+                android:id="@+id/openkeychain_banner"
+                layout="@layout/openkeychain_required_banner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/breadcrumbs"
+                android:layout_marginHorizontal="@dimen/activity_margin"
+                android:layout_marginTop="@dimen/small_margin" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/items_placeholder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/breadcrumbs"
+                android:layout_below="@+id/openkeychain_banner"
                 android:layout_centerHorizontal="true"
                 android:gravity="center"
                 android:paddingLeft="@dimen/activity_margin"
@@ -60,28 +66,29 @@
                 android:textSize="@dimen/bigger_text_size"
                 android:visibility="gone" />
 
-            <com.securefilemanager.app.views.MyRecyclerView
+            <ltechnologies.onionphone.securefilemanager.views.MyRecyclerView
                 android:id="@+id/items_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_below="@+id/breadcrumbs"
+                android:layout_below="@+id/openkeychain_banner"
                 android:clipToPadding="false"
-                android:layoutAnimation="@anim/layout_animation"
+                android:paddingTop="@dimen/m3_spacing_xs"
+                android:paddingBottom="@dimen/m3_spacing_xl"
                 android:scrollbars="none"
-                app:layoutManager="com.securefilemanager.app.views.MyLinearLayoutManager" />
+                app:layoutManager="ltechnologies.onionphone.securefilemanager.views.MyLinearLayoutManager" />
 
-            <com.securefilemanager.app.views.FastScroller
+            <ltechnologies.onionphone.securefilemanager.views.FastScroller
                 android:id="@+id/items_fastscroller"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_below="@+id/breadcrumbs"
+                android:layout_below="@+id/openkeychain_banner"
                 android:layout_alignParentEnd="true"
                 android:paddingStart="@dimen/normal_margin"
                 android:paddingEnd="0dp">
 
                 <include layout="@layout/fastscroller_handle_vertical" />
 
-            </com.securefilemanager.app.views.FastScroller>
+            </ltechnologies.onionphone.securefilemanager.views.FastScroller>
         </RelativeLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
@@ -92,9 +99,11 @@
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="@dimen/activity_margin"
         android:layout_marginBottom="@dimen/activity_margin"
+        android:contentDescription="@string/video_file"
         android:src="@drawable/ic_videocam_vector"
         android:visibility="gone"
-        app:fabSize="mini" />
+        app:fabSize="mini"
+        app:tint="?attr/colorOnPrimary" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/photo_fab"
@@ -103,9 +112,11 @@
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="@dimen/activity_margin"
         android:layout_marginBottom="@dimen/activity_margin"
+        android:contentDescription="@string/camera"
         android:src="@drawable/ic_camera_vector"
         android:visibility="gone"
-        app:fabSize="mini" />
+        app:fabSize="mini"
+        app:tint="?attr/colorOnPrimary" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/new_fab"
@@ -114,9 +125,11 @@
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="@dimen/activity_margin"
         android:layout_marginBottom="@dimen/activity_margin"
+        android:contentDescription="@string/create_new_folder"
         android:src="@drawable/ic_create_new_folder"
         android:visibility="gone"
-        app:fabSize="mini" />
+        app:fabSize="mini"
+        app:tint="?attr/colorOnPrimary" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/show_fab"
@@ -125,6 +138,8 @@
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="@dimen/activity_margin"
         android:layout_marginBottom="@dimen/activity_margin"
-        android:src="@drawable/ic_plus_vector" />
+        android:contentDescription="@string/create_new"
+        android:src="@drawable/ic_plus_vector"
+        app:tint="?attr/colorOnPrimary" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

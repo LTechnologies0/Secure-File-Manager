@@ -23,6 +23,34 @@
         android:title="@string/sort_by"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/toggle_grid_view"
+        android:title="@string/view_as_grid"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/toggle_hidden_files"
+        android:title="@string/show_hidden_files"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/toggle_dual_pane"
+        android:title="@string/dual_pane_on"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/open_trash"
+        android:title="@string/trash_title"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/open_recent"
+        android:title="@string/recent_files_title"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/storage_analyzer"
+        android:title="@string/storage_analyzer_title"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/free_space"
+        android:title="@string/free_space_title"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/add_favorite"
         android:icon="@drawable/ic_star_off_outline_vector"
         android:title="@string/add_to_favorites"

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/cab_restore"
+        android:icon="@drawable/ic_update_vector"
+        android:title="@string/trash_restore"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/cab_delete_permanent"
+        android:icon="@drawable/ic_delete_vector"
+        android:title="@string/trash_delete_permanent"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/empty_trash"
+        android:title="@string/trash_empty_all"
+        app:showAsAction="never" />
+</menu>

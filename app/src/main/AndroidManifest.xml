@@ -1,12 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.securefilemanager.app">
+    xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
+    <queries>
+        <package android:name="org.sufficientlysecure.keychain" />
+        <package android:name="org.sufficientlysecure.keychain.debug" />
+        <package android:name="ltechnologies.onionphone.pgpshield" />
+        <intent>
+            <action android:name="org.sufficientlysecure.keychain.action.ENCRYPT_DATA" />
+        </intent>
+        <intent>
+            <action android:name="org.sufficientlysecure.keychain.action.DECRYPT_DATA" />
+        </intent>
+        <intent>
+            <action android:name="ltechnologies.onionphone.pgpshield.action.ENCRYPT_FOLDER" />
+        </intent>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+        <intent>
+            <action android:name="android.media.action.VIDEO_CAPTURE" />
+        </intent>
+        <package android:name="app.grapheneos.camera" />
+    </queries>
+
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <uses-feature
         android:name="android.hardware.camera.any"
@@ -16,19 +45,27 @@
         android:required="false" />
 
     <application
+        android:name=".SfmApplication"
         android:allowBackup="false"
         android:allowClearUserData="false"
+        android:enableOnBackInvokedCallback="true"
+        android:fullBackupContent="false"
         android:description="@string/description"
         android:hasFragileUserData="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:manageSpaceActivity="com.securefilemanager.app.activities.ManageStorageActivity"
+        android:manageSpaceActivity="ltechnologies.onionphone.securefilemanager.activities.ManageStorageActivity"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:requestLegacyExternalStorage="true"
+        android:usesCleartextTraffic="false"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/AppTheme"
         tools:targetApi="q">
 
-        <activity android:name=".activities.MainActivity">
+        <activity
+            android:name=".activities.MainActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme.NoActionBar">
 
             <meta-data
                 android:name="android.app.default_searchable"
@@ -52,6 +89,14 @@
             </intent-filter>
 
             <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+            </intent-filter>
+
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
@@ -59,6 +104,7 @@
 
         <activity
             android:name=".activities.SaveAsActivity"
+            android:exported="true"
             android:label="@string/save_as">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -67,6 +113,8 @@
                 <data android:mimeType="text/plain" />
                 <data android:mimeType="image/*" />
                 <data android:mimeType="video/*" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="application/*" />
             </intent-filter>
 
             <intent-filter>
@@ -76,6 +124,8 @@
                 <data android:mimeType="text/plain" />
                 <data android:mimeType="image/*" />
                 <data android:mimeType="video/*" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="application/*" />
             </intent-filter>
         </activity>
 
@@ -89,12 +139,15 @@
 
         <activity
             android:name=".activities.DecompressActivity"
-            android:label="@string/decompress" />
+            android:label="@string/decompress"
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
             android:name=".activities.SettingsActivity"
+            android:exported="true"
             android:label="@string/settings"
-            android:parentActivityName=".activities.MainActivity">
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.Settings">
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -104,12 +157,54 @@
         <activity
             android:name=".activities.FavoritesActivity"
             android:label="@string/favorites"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <activity
+            android:name=".activities.TrashActivity"
+            android:label="@string/trash_title"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <activity
+            android:name=".activities.RecentActivity"
+            android:label="@string/recent_files_title"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <activity
+            android:name=".activities.TextViewerActivity"
+            android:label="@string/text_viewer_title"
             android:parentActivityName=".activities.MainActivity" />
+
+        <activity
+            android:name=".activities.ImageViewerActivity"
+            android:label="@string/image_viewer_title"
+            android:parentActivityName=".activities.MainActivity" />
+
+        <activity
+            android:name=".activities.MediaViewerActivity"
+            android:label="@string/media_viewer_title"
+            android:configChanges="orientation|screenSize"
+            android:parentActivityName=".activities.MainActivity" />
+
+        <activity
+            android:name=".activities.StorageAnalyzerActivity"
+            android:label="@string/storage_analyzer_title"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <activity
+            android:name=".activities.FreeSpaceActivity"
+            android:label="@string/free_space_title"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
             android:name=".activities.AboutActivity"
             android:label="@string/about"
-            android:parentActivityName=".activities.MainActivity" />
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
             android:name=".activities.AuthenticationActivity"
@@ -123,6 +218,18 @@
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
+        </provider>
+
+        <provider
+            android:name=".providers.SfmDocumentsProvider"
+            android:authorities="${applicationId}.documents"
+            android:enabled="false"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
         </provider>
 
         <service
@@ -142,11 +249,28 @@
         </service>
 
         <service
+            android:name=".services.TransferService"
+            android:description="@string/copying"
+            android:directBootAware="false"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            android:icon="@drawable/ic_launcher_foreground"
+            android:label="TransferService">
+
+            <intent-filter>
+                <action android:name="ltechnologies.onionphone.securefilemanager.TRANSFER" />
+                <action android:name="ltechnologies.onionphone.securefilemanager.TRANSFER_STOP" />
+            </intent-filter>
+        </service>
+
+        <service
             android:name=".services.UnlockAppService"
             android:description="@string/authentication_service_description"
             android:directBootAware="false"
             android:enabled="true"
             android:exported="false"
+            android:foregroundServiceType="dataSync"
             android:icon="@drawable/ic_launcher_foreground"
             android:label="UnlockAppService">
 

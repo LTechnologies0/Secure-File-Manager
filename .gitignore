@@ -4,7 +4,21 @@
 /.idea
 .DS_Store
 /build
+**/build
 /captures
 .externalNativeBuild
 .cxx
+.kotlin/
 secrets.properties
+*.apk
+*.aab
+*.dex
+*.log
+*.hprof
+.vscode/
+
+# Release signing — never commit
+keystore.properties
+release.keystore
+*.jks
+**/ci-release.keystore

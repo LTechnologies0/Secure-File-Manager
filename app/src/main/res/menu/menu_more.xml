@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/open_trash"
+        android:title="@string/trash_title" />
+    <item
+        android:id="@+id/settings"
+        android:title="@string/settings" />
+    <item
+        android:id="@+id/storage_analyzer"
+        android:title="@string/storage_analyzer_title" />
+    <item
+        android:id="@+id/free_space"
+        android:title="@string/free_space_title" />
+    <item
+        android:id="@+id/intro"
+        android:title="@string/introduction" />
+    <item
+        android:id="@+id/tutorial"
+        android:title="@string/tutorial" />
+    <item
+        android:id="@+id/about"
+        android:title="@string/about" />
+</menu>

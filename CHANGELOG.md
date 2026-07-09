@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased (LTechnologies0/Secure-File-Manager fork)
+
+* Rebrand: `applicationId` changed to `ltechnologies.onionphone.securefilemanager`, part of the [OnionPhone](https://onionphone.org) app family
+* Self-contained release signing (`gradle/release-signing.gradle`) — local `keystore.properties` or CI secrets, no external paths
+* Per-ABI signed release builds (`gradle/abi-release.gradle`) for `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`
+* Dokka-generated KDoc published to GitHub Pages
+* GitHub Actions CI: unit tests, debug build, CodeQL, OWASP dependency review, Dependabot
+* Ongoing Kotlin conversion of the original Java codebase
+
 #### v0.1.9 - beta
 
 * Add Danish language

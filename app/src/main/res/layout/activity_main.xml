@@ -1,14 +1,158 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
     android:id="@+id/main_screen"
+
     android:layout_width="match_parent"
-    android:filterTouchesWhenObscured="true"
-    android:layout_height="match_parent">
 
-    <fragment
-        android:id="@+id/fragment_holder"
-        android:name="com.securefilemanager.app.fragments.ItemsFragment"
+    android:layout_height="match_parent"
+
+    android:filterTouchesWhenObscured="true">
+
+
+
+    <LinearLayout
+
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
 
-</RelativeLayout>
+        android:layout_height="match_parent"
+
+        android:orientation="vertical">
+
+
+
+        <com.google.android.material.appbar.AppBarLayout
+
+            android:id="@+id/app_bar"
+
+            android:layout_width="match_parent"
+
+            android:layout_height="wrap_content"
+
+            android:background="@android:color/transparent"
+
+            app:elevation="0dp">
+
+
+
+            <com.google.android.material.appbar.MaterialToolbar
+
+                android:id="@+id/toolbar"
+
+                android:layout_width="match_parent"
+
+                android:layout_height="?attr/actionBarSize"
+
+                app:navigationIconTint="?attr/colorOnSurface" />
+
+
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+
+
+        <LinearLayout
+
+            android:id="@+id/main_content"
+
+            android:layout_width="match_parent"
+
+            android:layout_height="0dp"
+
+            android:layout_weight="1"
+
+            android:orientation="horizontal">
+
+
+
+            <FrameLayout
+
+                android:id="@+id/fragment_primary"
+
+                android:layout_width="0dp"
+
+                android:layout_height="match_parent"
+
+                android:layout_weight="1">
+
+
+
+                <fragment
+
+                    android:id="@+id/fragment_holder"
+
+                    android:name="ltechnologies.onionphone.securefilemanager.fragments.ItemsFragment"
+
+                    android:layout_width="match_parent"
+
+                    android:layout_height="match_parent" />
+
+
+
+            </FrameLayout>
+
+
+
+            <FrameLayout
+
+                android:id="@+id/fragment_secondary"
+
+                android:layout_width="0dp"
+
+                android:layout_height="match_parent"
+
+                android:layout_weight="1"
+
+                android:visibility="gone">
+
+
+
+                <fragment
+
+                    android:id="@+id/fragment_secondary_pane"
+
+                    android:name="ltechnologies.onionphone.securefilemanager.fragments.ItemsFragment"
+
+                    android:layout_width="match_parent"
+
+                    android:layout_height="match_parent" />
+
+
+
+            </FrameLayout>
+
+
+
+        </LinearLayout>
+
+
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+
+            android:id="@+id/bottom_navigation"
+
+            android:layout_width="match_parent"
+
+            android:layout_height="wrap_content"
+
+            app:elevation="0dp"
+
+            app:itemPaddingBottom="4dp"
+
+            app:itemPaddingTop="4dp"
+
+            app:labelVisibilityMode="selected"
+
+            app:menu="@menu/bottom_navigation" />
+
+
+
+    </LinearLayout>
+
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+

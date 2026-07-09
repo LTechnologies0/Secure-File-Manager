@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.textview.MaterialTextView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.chip.Chip xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/breadcrumb_text"
+    style="@style/Widget.Material3.Chip.Assist"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:paddingLeft="@dimen/small_margin"
-    android:paddingTop="@dimen/medium_margin"
-    android:paddingRight="@dimen/small_margin"
-    android:paddingBottom="@dimen/medium_margin"
-    android:textSize="@dimen/normal_text_size" />
+    android:checkable="false"
+    android:clickable="true"
+    android:focusable="true"
+    android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+    app:chipCornerRadius="@dimen/m3_corner_chip"
+    app:chipMinHeight="32dp"
+    app:ensureMinTouchTargetSize="false" />

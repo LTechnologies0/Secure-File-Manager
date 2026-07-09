@@ -4,6 +4,7 @@
     android:id="@+id/scroll_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fillViewport="true"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <LinearLayout
@@ -13,290 +14,331 @@
         android:orientation="vertical"
         android:padding="@dimen/medium_margin">
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.App.ListCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="@dimen/medium_margin">
-
-            <ImageView
-                android:layout_width="@dimen/thumbnail_size"
-                android:layout_height="@dimen/thumbnail_size"
-                android:layout_marginEnd="@dimen/big_margin"
-                android:contentDescription="@string/app_name"
-                android:src="@mipmap/ic_launcher" />
+            android:layout_marginBottom="@dimen/m3_spacing_sm">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackground"
-                android:orientation="vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="@dimen/medium_margin">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/app_name"
-                    android:textAppearance="?android:attr/textAppearanceLarge"
-                    android:textStyle="bold" />
+                <ImageView
+                    android:layout_width="@dimen/thumbnail_size"
+                    android:layout_height="@dimen/thumbnail_size"
+                    android:layout_marginEnd="@dimen/big_margin"
+                    android:contentDescription="@string/app_name"
+                    android:src="@mipmap/ic_launcher" />
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/description"
-                    android:textStyle="bold" />
+                    android:orientation="vertical">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/app_name"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/description"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/about_layout_version"
+            style="@style/Widget.App.ListCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_marginVertical="@dimen/m3_spacing_xs"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
 
-            <!-- version -->
             <LinearLayout
-                android:id="@+id/about_layout_version"
                 android:layout_width="match_parent"
-                android:layout_height="?android:attr/listPreferredItemHeight"
-                android:background="?android:attr/selectableItemBackground"
+                android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingTop="@dimen/medium_margin"
-                android:paddingBottom="@dimen/medium_margin">
+                android:padding="@dimen/medium_margin">
 
                 <ImageView
                     android:id="@+id/about_img_version"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/activity_margin"
                     android:layout_marginEnd="@dimen/excessive_margin"
                     android:contentDescription="@string/about_label_version"
-                    app:srcCompat="@drawable/ic_info_vector" />
+                    app:srcCompat="@drawable/ic_info_vector"
+                    app:tint="?attr/colorOnSurfaceVariant" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/about_label_version"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:textStyle="bold" />
+                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/about_text_version"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
                 </LinearLayout>
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <!-- license -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/about_layout_license"
+            style="@style/Widget.App.ListCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/m3_spacing_xs"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
             <LinearLayout
-                android:id="@+id/about_layout_license"
                 android:layout_width="match_parent"
-                android:layout_height="?android:attr/listPreferredItemHeight"
-                android:background="?android:attr/selectableItemBackground"
+                android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingTop="@dimen/medium_margin"
-                android:paddingBottom="@dimen/medium_margin">
+                android:padding="@dimen/medium_margin">
 
                 <ImageView
                     android:id="@+id/about_img_license"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/activity_margin"
                     android:layout_marginEnd="@dimen/excessive_margin"
                     android:contentDescription="@string/about_label_license"
-                    app:srcCompat="@drawable/ic_copyright_vector" />
+                    app:srcCompat="@drawable/ic_copyright_vector"
+                    app:tint="?attr/colorOnSurfaceVariant" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/about_label_license"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:textStyle="bold" />
+                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/about_label_gnu"
-                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
                 </LinearLayout>
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <!-- privacy policy -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/about_layout_privacy_policy"
+            style="@style/Widget.App.ListCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/m3_spacing_xs"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
             <LinearLayout
-                android:id="@+id/about_layout_privacy_policy"
                 android:layout_width="match_parent"
-                android:layout_height="?android:attr/listPreferredItemHeight"
-                android:background="?android:attr/selectableItemBackground"
+                android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingTop="@dimen/medium_margin"
-                android:paddingBottom="@dimen/medium_margin">
+                android:padding="@dimen/medium_margin">
 
                 <ImageView
                     android:id="@+id/about_img_privacy_policy"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/activity_margin"
                     android:layout_marginEnd="@dimen/excessive_margin"
                     android:contentDescription="@string/about_label_changelog"
-                    app:srcCompat="@drawable/ic_shield_lock_vector" />
+                    app:srcCompat="@drawable/ic_shield_lock_vector"
+                    app:tint="?attr/colorOnSurfaceVariant" />
 
-                <TextView
+                <com.google.android.material.textview.MaterialTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/about_label_privacy_policy"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <!-- changelog -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/about_layout_changelog"
+            style="@style/Widget.App.ListCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/m3_spacing_xs"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
             <LinearLayout
-                android:id="@+id/about_layout_changelog"
                 android:layout_width="match_parent"
-                android:layout_height="?android:attr/listPreferredItemHeight"
-                android:background="?android:attr/selectableItemBackground"
+                android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingTop="@dimen/medium_margin"
-                android:paddingBottom="@dimen/medium_margin">
+                android:padding="@dimen/medium_margin">
 
                 <ImageView
                     android:id="@+id/about_img_changelog"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/activity_margin"
                     android:layout_marginEnd="@dimen/excessive_margin"
                     android:contentDescription="@string/about_label_changelog"
-                    app:srcCompat="@drawable/ic_history_vector" />
+                    app:srcCompat="@drawable/ic_history_vector"
+                    app:tint="?attr/colorOnSurfaceVariant" />
 
-                <TextView
+                <com.google.android.material.textview.MaterialTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/about_label_changelog"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <!-- source -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/about_layout_source"
+            style="@style/Widget.App.ListCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/m3_spacing_xs"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
             <LinearLayout
-                android:id="@+id/about_layout_source"
                 android:layout_width="match_parent"
-                android:layout_height="?android:attr/listPreferredItemHeight"
-                android:background="?android:attr/selectableItemBackground"
+                android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingTop="@dimen/medium_margin"
-                android:paddingBottom="@dimen/medium_margin">
+                android:padding="@dimen/medium_margin">
 
                 <ImageView
                     android:id="@+id/about_img_source"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/activity_margin"
                     android:layout_marginEnd="@dimen/excessive_margin"
                     android:contentDescription="@string/about_label_source"
-                    app:srcCompat="@drawable/ic_code_vector" />
+                    app:srcCompat="@drawable/ic_code_vector"
+                    app:tint="?attr/colorOnSurfaceVariant" />
 
-                <TextView
+                <com.google.android.material.textview.MaterialTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/about_label_source"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <!-- faq -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/about_layout_faq"
+            style="@style/Widget.App.ListCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/m3_spacing_xs"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
             <LinearLayout
-                android:id="@+id/about_layout_faq"
                 android:layout_width="match_parent"
-                android:layout_height="?android:attr/listPreferredItemHeight"
-                android:background="?android:attr/selectableItemBackground"
+                android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingTop="@dimen/medium_margin"
-                android:paddingBottom="@dimen/medium_margin">
+                android:padding="@dimen/medium_margin">
 
                 <ImageView
                     android:id="@+id/about_img_faq"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/activity_margin"
                     android:layout_marginEnd="@dimen/excessive_margin"
                     android:contentDescription="@string/about_label_faq"
-                    app:srcCompat="@drawable/ic_help_vector" />
+                    app:srcCompat="@drawable/ic_help_vector"
+                    app:tint="?attr/colorOnSurfaceVariant" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/about_label_faq"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:textStyle="bold" />
+                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/about_label_faq_long"
-                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
                 </LinearLayout>
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <!-- faq -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/about_layout_contribute"
+            style="@style/Widget.App.ListCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/m3_spacing_xs"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
             <LinearLayout
-                android:id="@+id/about_layout_contribute"
                 android:layout_width="match_parent"
-                android:layout_height="?android:attr/listPreferredItemHeight"
-                android:background="?android:attr/selectableItemBackground"
+                android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingTop="@dimen/medium_margin"
-                android:paddingBottom="@dimen/medium_margin">
+                android:padding="@dimen/medium_margin">
 
                 <ImageView
                     android:id="@+id/about_img_contribute"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/activity_margin"
                     android:layout_marginEnd="@dimen/excessive_margin"
                     android:contentDescription="@string/about_label_faq"
-                    app:srcCompat="@drawable/ic_account_group_vector" />
+                    app:srcCompat="@drawable/ic_account_group_vector"
+                    app:tint="?attr/colorOnSurfaceVariant" />
 
-                <TextView
+                <com.google.android.material.textview.MaterialTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/about_label_contribute"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
             </LinearLayout>
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 

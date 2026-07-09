@@ -1,0 +1,114 @@
+package ltechnologies.onionphone.securefilemanager.services
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.os.Build
+import android.os.IBinder
+import androidx.core.app.NotificationCompat
+import ltechnologies.onionphone.securefilemanager.R
+import ltechnologies.onionphone.securefilemanager.extensions.appLock
+import ltechnologies.onionphone.securefilemanager.extensions.getNotificationManager
+import ltechnologies.onionphone.securefilemanager.extensions.isAuthenticatorNotSet
+import ltechnologies.onionphone.securefilemanager.helpers.APP_CHANNEL_ID
+import ltechnologies.onionphone.securefilemanager.helpers.getNotificationId
+
+class UnlockAppService : Service() {
+
+    private val mNotificationId = getNotificationId()
+
+    override fun onCreate() {
+        super.onCreate()
+
+        if(isAuthenticatorNotSet()) {
+            return
+        }
+
+        val notificationManager: NotificationManager = this.getNotificationManager()
+        notificationManager.createNotificationChannel(this.getNotificationChannel())
+        val notification: NotificationCompat.Builder = this.getNotificationBuilder()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                mNotificationId,
+                notification.build(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+            )
+        } else {
+            startForeground(mNotificationId, notification.build())
+        }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+
+        when (intent?.action) {
+            ACTION_LOCK -> {
+                this.appLock()
+                this.stopSelf()
+            }
+            ACTION_STOP -> this.stopSelf()
+        }
+
+        return super.onStartCommand(intent, flags, startId)
+    }
+
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
+    }
+
+    private fun getNotificationChannel(): NotificationChannel =
+        NotificationChannel(
+            APP_CHANNEL_ID,
+            APP_CHANNEL_ID,
+            NotificationManager.IMPORTANCE_LOW
+        )
+
+    private fun getStopIntent(): PendingIntent? =
+        PendingIntent.getService(
+            this,
+            LOCK_REQUEST_CODE,
+            Intent(this, this::class.java).apply {
+                action = ACTION_LOCK
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+    private fun getStopAction(): NotificationCompat.Action? =
+        NotificationCompat.Action.Builder(
+            R.drawable.ic_lock_vector,
+            this.getString(R.string.lock_app),
+            this.getStopIntent()
+        ).build()
+
+    private fun getNotificationBuilder(): NotificationCompat.Builder =
+        NotificationCompat.Builder(this, APP_CHANNEL_ID)
+            .setContentText(getString(R.string.app_unlocked_notification))
+            .setSmallIcon(R.drawable.ic_shield_lock_vector)
+            .setShowWhen(false)
+            .setSound(null)
+            .setCategory(NotificationCompat.CATEGORY_EVENT)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setContentIntent(this.getStopIntent())
+            .addAction(this.getStopAction())
+
+    companion object {
+        // Action
+        private const val ACTION_LOCK = "ACTION_LOCK"
+        private const val ACTION_STOP = "ACTION_STOP"
+
+        // Other
+        private const val LOCK_REQUEST_CODE = 13
+
+        fun getStartIntent(context: Context) = Intent(context, UnlockAppService::class.java)
+
+        fun getStopIntent(context: Context) = Intent(context, UnlockAppService::class.java).apply {
+            action = ACTION_STOP
+        }
+    }
+
+}

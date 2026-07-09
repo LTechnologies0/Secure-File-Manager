@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/item_frame"
+    style="@style/Widget.App.ListCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
+    android:layout_marginHorizontal="@dimen/m3_spacing_md"
+    android:layout_marginVertical="@dimen/m3_spacing_xs"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="@drawable/selector"
-    android:paddingTop="@dimen/tiny_margin"
-    android:paddingBottom="@dimen/tiny_margin">
+    android:foreground="?attr/selectableItemBackground">
 
     <RelativeLayout
         android:id="@+id/item_holder"
@@ -24,44 +25,67 @@
             android:layout_height="@dimen/file_picker_icon_size"
             android:layout_centerVertical="true"
             android:padding="@dimen/medium_margin"
-            android:src="@drawable/ic_folder_vector" />
+            android:src="@drawable/ic_folder_vector"
+            android:contentDescription="@string/cd_file_type_icon" />
 
-        <TextView
-            android:id="@+id/item_name"
+        <LinearLayout
+            android:id="@+id/item_name_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignTop="@+id/item_icon"
             android:layout_toEndOf="@+id/item_icon"
-            android:ellipsize="end"
-            android:maxLines="1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:paddingStart="@dimen/tiny_margin"
-            android:paddingEnd="0dp"
-            android:paddingTop="@dimen/small_margin"
-            tools:text="Directory" />
+            android:paddingTop="@dimen/small_margin">
+
+            <TextView
+                android:id="@+id/item_name"
+                style="@style/M3.ListItemTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                tools:text="document.pdf" />
+
+            <TextView
+                android:id="@+id/item_gpg_badge"
+                style="@style/M3.Label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/m3_spacing_sm"
+                android:background="@drawable/m3_badge_tonal"
+                android:paddingStart="@dimen/m3_spacing_sm"
+                android:paddingTop="@dimen/m3_spacing_xs"
+                android:paddingEnd="@dimen/m3_spacing_sm"
+                android:paddingBottom="@dimen/m3_spacing_xs"
+                android:text="@string/gpg_badge"
+                android:textColor="?attr/colorOnSecondaryContainer"
+                android:visibility="gone"
+                tools:visibility="visible" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/item_details"
+            style="@style/M3.ListItemSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/item_name"
+            android:layout_below="@+id/item_name_row"
             android:layout_toEndOf="@+id/item_icon"
-            android:alpha="0.6"
             android:paddingStart="@dimen/tiny_margin"
-            android:paddingEnd="0dp"
-            android:textSize="@dimen/smaller_text_size"
             tools:text="1 KB" />
 
         <TextView
             android:id="@+id/item_date"
+            style="@style/M3.ListItemSubtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignTop="@+id/item_details"
             android:layout_alignBottom="@+id/item_details"
             android:layout_toEndOf="@+id/item_details"
-            android:alpha="0.6"
             android:gravity="end"
-            android:textSize="@dimen/smaller_text_size"
             tools:text="1.1.1970" />
 
     </RelativeLayout>
-</FrameLayout>
+</com.google.android.material.card.MaterialCardView>

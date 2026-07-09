@@ -15,7 +15,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
 
-            <com.securefilemanager.app.views.Breadcrumbs
+            <ltechnologies.onionphone.securefilemanager.views.Breadcrumbs
                 android:id="@+id/filepicker_breadcrumbs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -24,16 +24,16 @@
                 android:paddingRight="@dimen/activity_margin"
                 android:paddingBottom="@dimen/medium_margin" />
 
-            <com.securefilemanager.app.views.MyRecyclerView
+            <ltechnologies.onionphone.securefilemanager.views.MyRecyclerView
                 android:id="@+id/filepicker_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_below="@+id/filepicker_breadcrumbs"
                 android:layoutAnimation="@anim/layout_animation"
                 android:scrollbars="none"
-                app:layoutManager="com.securefilemanager.app.views.MyLinearLayoutManager" />
+                app:layoutManager="ltechnologies.onionphone.securefilemanager.views.MyLinearLayoutManager" />
 
-            <com.securefilemanager.app.views.FastScroller
+            <ltechnologies.onionphone.securefilemanager.views.FastScroller
                 android:id="@+id/filepicker_fastscroller"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
@@ -45,7 +45,7 @@
 
                 <include layout="@layout/fastscroller_handle_vertical" />
 
-            </com.securefilemanager.app.views.FastScroller>
+            </ltechnologies.onionphone.securefilemanager.views.FastScroller>
         </RelativeLayout>
 
         <RelativeLayout
@@ -63,14 +63,14 @@
                 android:text="@string/favorites"
                 android:textSize="@dimen/bigger_text_size" />
 
-            <com.securefilemanager.app.views.MyRecyclerView
+            <ltechnologies.onionphone.securefilemanager.views.MyRecyclerView
                 android:id="@+id/filepicker_favorites_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_below="@+id/filepicker_favorites_label"
                 android:layout_marginStart="@dimen/activity_margin"
                 android:scrollbars="none"
-                app:layoutManager="com.securefilemanager.app.views.MyLinearLayoutManager" />
+                app:layoutManager="ltechnologies.onionphone.securefilemanager.views.MyLinearLayoutManager" />
 
         </RelativeLayout>
     </RelativeLayout>

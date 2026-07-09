@@ -1,0 +1,79 @@
+[versions]
+agp = "9.1.1"
+kotlin = "2.2.10"
+ksp = "2.2.10-2.0.2"
+dependency-check = "10.0.4"
+aboutlibraries = "11.6.3"
+browserstack = "3.0.2"
+gradle-versions = "0.51.0"
+
+compileSdk = "37"
+targetSdk = "37"
+minSdk = "26"
+
+activity = "1.10.1"
+appintro = "6.3.1"
+argon2 = "1.6.0"
+appcompat = "1.7.1"
+biometric = "1.1.0"
+cardview = "1.0.0"
+constraintlayout = "2.2.0"
+coroutines = "1.9.0"
+documentfile = "1.0.1"
+exifinterface = "1.3.7"
+fragment = "1.8.9"
+glide = "4.16.0"
+ktx = "1.16.0"
+lifecycle = "2.8.7"
+material = "1.14.0-alpha07"
+preference = "1.2.1"
+recyclerview = "1.4.0"
+security-crypto = "1.1.0"
+swiperefreshlayout = "1.1.0"
+taptargetview = "1.14.0"
+zip4j = "2.11.5"
+sshj = "0.39.0"
+commons-net = "3.11.1"
+media3 = "1.5.1"
+viewpager2 = "1.1.0"
+
+[libraries]
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activity" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
+androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "ktx" }
+androidx-documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
+androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment" }
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle" }
+androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preference" }
+androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+androidx-viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref = "viewpager2" }
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "security-crypto" }
+androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+appintro = { group = "com.github.AppIntro", name = "AppIntro", version.ref = "appintro" }
+argon2kt = { group = "com.lambdapioneer.argon2kt", name = "argon2kt", version.ref = "argon2" }
+taptargetview = { group = "com.getkeepsafe.taptargetview", name = "taptargetview", version.ref = "taptargetview" }
+zip4j = { group = "com.github.srikanth-lingala", name = "zip4j", version.ref = "zip4j" }
+sshj = { group = "com.hierynomus", name = "sshj", version.ref = "sshj" }
+commons-net = { group = "commons-net", name = "commons-net", version.ref = "commons-net" }
+aboutlibraries-core = { group = "com.mikepenz", name = "aboutlibraries-core", version.ref = "aboutlibraries" }
+aboutlibraries = { group = "com.mikepenz", name = "aboutlibraries", version.ref = "aboutlibraries" }
+glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
+glide-ksp = { group = "com.github.bumptech.glide", name = "ksp", version.ref = "glide" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+dependency-check = { id = "org.owasp.dependencycheck", version.ref = "dependency-check" }
+aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
+browserstack = { id = "com.browserstack.gradle", version.ref = "browserstack" }
+gradle-versions = { id = "com.github.ben-manes.versions", version.ref = "gradle-versions" }

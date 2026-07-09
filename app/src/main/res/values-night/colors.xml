@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ponytail: AndroWatch M3 dark palette -->
+    <color name="color_primary">#7CACFF</color>
+    <color name="color_primary_dark">#5A8FE0</color>
+    <color name="color_secondary">#2EC4B6</color>
+    <color name="color_accent">#7CACFF</color>
+    <color name="m3_on_primary">#001B3D</color>
+    <color name="m3_primary_container">#1A3A6B</color>
+    <color name="m3_on_primary_container">#D6E4FF</color>
+    <color name="m3_surface">#121318</color>
+    <color name="m3_on_surface">#E3E2E8</color>
+    <color name="m3_surface_container">#1E1F26</color>
+    <color name="m3_surface_container_high">#282A33</color>
+    <color name="m3_outline">#8E9199</color>
+    <color name="m3_outline_variant">#44474F</color>
+    <color name="default_text_color_light">@color/m3_on_surface</color>
+    <color name="pressed_item_foreground">#14FFFFFF</color>
+    <color name="divider_grey">#44AAAAAA</color>
+</resources>

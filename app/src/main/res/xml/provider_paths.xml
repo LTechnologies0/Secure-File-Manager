@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
+    <!-- Required for PGP Shield IPC: share files from external storage via content:// URIs -->
     <external-path
         name="external_files"
         path="." />
-    <root-path
-        name="external_files"
-        path="/" />
     <files-path
         name="hidden_path"
         path=".hidden/" />
+    <cache-path
+        name="share"
+        path="share/" />
+    <cache-path
+        name="media"
+        path="media/" />
+    <cache-path
+        name="remote"
+        path="remote/" />
 </paths>

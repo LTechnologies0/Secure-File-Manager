@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/free_space_holder"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:foreground="@drawable/selector"
+    android:orientation="vertical"
+    android:padding="@dimen/normal_margin">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/free_space_title"
+        style="@style/M3.ListItemTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/free_space_paths"
+        style="@style/M3.ListItemSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="8" />
+
+</LinearLayout>

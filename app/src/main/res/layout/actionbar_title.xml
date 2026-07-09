@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/actionbar_title"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:gravity="center_vertical|start"
-    android:paddingStart="0dp"
-    android:paddingEnd="@dimen/activity_margin"
-    android:textColor="@android:color/white"
-    android:textSize="@dimen/actionbar_text_size" />
+<com.google.android.material.appbar.MaterialToolbar xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/actionbar_selection_toolbar"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:background="@android:color/transparent"
+    app:titleTextAppearance="@style/TextAppearance.Material3.TitleMedium" />

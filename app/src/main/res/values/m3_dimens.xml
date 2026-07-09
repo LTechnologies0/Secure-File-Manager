@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ponytail: synced from docs/m3-tokens.xml -->
+    <dimen name="m3_spacing_xs">4dp</dimen>
+    <dimen name="m3_spacing_sm">8dp</dimen>
+    <dimen name="m3_spacing_md">16dp</dimen>
+    <dimen name="m3_spacing_lg">24dp</dimen>
+    <dimen name="m3_spacing_xl">32dp</dimen>
+    <dimen name="m3_corner_card">12dp</dimen>
+    <dimen name="m3_corner_dialog">28dp</dimen>
+    <dimen name="m3_corner_chip">8dp</dimen>
+    <dimen name="m3_corner_fab">16dp</dimen>
+    <dimen name="m3_min_touch_target">48dp</dimen>
+</resources>

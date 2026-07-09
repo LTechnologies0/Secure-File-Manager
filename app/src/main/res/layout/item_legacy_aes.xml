@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/normal_margin">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/legacy_aes_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/bigger_text_size" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/legacy_aes_path"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:alpha="0.7"
+        android:textSize="@dimen/smaller_text_size" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/legacy_aes_size"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:alpha="0.7"
+        android:textSize="@dimen/smaller_text_size" />
+
+</LinearLayout>

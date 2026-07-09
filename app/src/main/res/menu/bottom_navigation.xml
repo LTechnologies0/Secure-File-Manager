@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_files"
+        android:icon="@drawable/ic_folder_vector"
+        android:title="@string/nav_files" />
+    <item
+        android:id="@+id/nav_recent"
+        android:icon="@drawable/ic_history_vector"
+        android:title="@string/recent_files_title" />
+    <item
+        android:id="@+id/nav_favorites"
+        android:icon="@drawable/ic_star_on_vector"
+        android:title="@string/favorites" />
+    <item
+        android:id="@+id/nav_more"
+        android:icon="@drawable/ic_more_vert_vector"
+        android:title="@string/nav_more" />
+</menu>

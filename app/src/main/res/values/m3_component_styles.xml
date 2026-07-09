@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ponytail: M3 component overrides — Expressive theme, standard widget parents -->
+
+    <!-- ponytail: no materialThemeOverlay on BottomNav — breaks attr resolve on Material 1.14 -->
+    <style name="Widget.App.FloatingActionButton" parent="Widget.Material3.FloatingActionButton.Primary">
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Fab</item>
+    </style>
+
+    <style name="ShapeAppearance.App.Fab" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerSize">@dimen/m3_corner_fab</item>
+    </style>
+
+    <style name="Widget.App.ListCard" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainerHigh</item>
+        <item name="cardCornerRadius">@dimen/m3_corner_card</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <style name="Widget.App.Toolbar" parent="Widget.Material3.Toolbar">
+        <item name="android:background">?attr/colorSurface</item>
+    </style>
+
+    <style name="Widget.App.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox" />
+
+    <style name="ThemeOverlay.App.AlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog" />
+
+    <!-- ponytail: Material3.Preference overlay missing in material 1.14 — use androidx preference material overlay -->
+    <style name="ThemeOverlay.App.Preference" parent="PreferenceThemeOverlay.v14.Material" />
+
+</resources>

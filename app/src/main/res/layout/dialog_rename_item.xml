@@ -11,14 +11,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
-    <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/rename_item_name"
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.App.TextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/activity_margin"
-        android:singleLine="true"
-        android:textCursorDrawable="@null"
-        android:textSize="@dimen/normal_text_size" />
+        android:layout_marginBottom="@dimen/activity_margin">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/rename_item_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textCursorDrawable="@null"
+            android:textSize="@dimen/normal_text_size" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/rename_item_extension_label"
@@ -26,13 +33,20 @@
         android:layout_height="wrap_content"
         android:text="@string/extension" />
 
-    <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/rename_item_extension"
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.App.TextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/activity_margin"
-        android:singleLine="true"
-        android:textCursorDrawable="@null"
-        android:textSize="@dimen/normal_text_size" />
+        android:layout_marginBottom="@dimen/activity_margin">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/rename_item_extension"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textCursorDrawable="@null"
+            android:textSize="@dimen/normal_text_size" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
 </LinearLayout>

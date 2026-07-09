@@ -20,12 +20,12 @@
         android:id="@+id/cab_encrypt"
         android:icon="@drawable/ic_lock_vector"
         android:title="@string/encrypt"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="ifRoom|withText" />
     <item
         android:id="@+id/cab_decrypt"
         android:icon="@drawable/ic_lock_open_vector"
         android:title="@string/decrypt"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="ifRoom|withText" />
     <item
         android:id="@+id/cab_properties"
         android:icon="@drawable/ic_info_vector"
@@ -42,8 +42,24 @@
         android:title="@string/share"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/cab_export"
+        android:title="@string/export_to"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/cab_copy_path"
         android:title="@string/copy_path"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/cab_cut"
+        android:title="@string/cut"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/cab_copy_clipboard"
+        android:title="@string/copy"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/cab_paste"
+        android:title="@string/paste"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_set_as"

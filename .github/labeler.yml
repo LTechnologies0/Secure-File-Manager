@@ -1,0 +1,52 @@
+android:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "app/**"
+          - "**/*.kt"
+          - "**/*.java"
+          - "**/AndroidManifest.xml"
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "docs/**"
+          - "fastlane/**"
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/build.gradle.kts"
+          - "gradle/**"
+          - ".github/dependabot.yml"
+
+ci/cd:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/workflows/**"
+          - ".github/dependabot.yml"
+
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "SECURITY.md"
+          - "gradle/privacy-logging.pro"
+          - "gradle/release-signing.gradle"
+          - "app/src/main/kotlin/**/helpers/**"
+
+i18n:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/res/values*/**"
+
+encryption:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "app/src/main/kotlin/**/transfer/**"
+          - "app/src/main/kotlin/**/openpgp/**"
+
+storage:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "app/src/main/kotlin/**/storage/**"
+          - "app/src/main/kotlin/**/providers/**"

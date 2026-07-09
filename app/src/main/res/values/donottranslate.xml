@@ -1,5 +1,5 @@
 <resources>
-    <string name="package_name">com.securefilemanager.app</string>
+    <string name="package_name">ltechnologies.onionphone.securefilemanager</string>
 
     <!-- About -->
     <string name="about_name_author1">Michal Olenčin (Alfavio)</string>

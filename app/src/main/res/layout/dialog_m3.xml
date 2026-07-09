@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ponytail: standard M3 dialog shell — put custom fields in dialog_card_custom -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/m3_spacing_md">
+
+    <include layout="@layout/dialog_card_m3" />
+</FrameLayout>

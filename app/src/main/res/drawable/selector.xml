@@ -10,7 +10,7 @@
     <item>
         <ripple android:color="@color/pressed_item_foreground">
             <item android:id="@android:id/mask">
-                <color android:color="@android:color/white" />
+                <color android:color="?attr/colorSurface" />
             </item>
         </ripple>
     </item>

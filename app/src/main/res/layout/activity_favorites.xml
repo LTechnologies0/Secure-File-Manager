@@ -1,47 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/manage_favorites_wrapper"
     android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:filterTouchesWhenObscured="true"
-    android:layout_height="wrap_content">
+    android:orientation="vertical">
 
-    <com.securefilemanager.app.views.MyRecyclerView
-        android:id="@+id/manage_favorites_list"
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/favorites_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        app:layoutManager="com.securefilemanager.app.views.MyLinearLayoutManager" />
+        android:layout_height="?attr/actionBarSize"
+        app:navigationIconTint="?attr/colorOnSurface"
+        app:title="@string/favorites" />
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/manage_favorites_placeholder"
+    <RelativeLayout
+        android:id="@+id/manage_favorites_wrapper"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="@dimen/activity_margin"
-        android:layout_marginBottom="@dimen/small_margin"
-        android:alpha="0.8"
-        android:gravity="center"
-        android:lineSpacingExtra="@dimen/tiny_margin"
-        android:paddingStart="@dimen/activity_margin"
-        android:paddingTop="@dimen/activity_margin"
-        android:paddingEnd="@dimen/activity_margin"
-        android:textSize="@dimen/bigger_text_size"
-        android:textStyle="italic"
-        android:text="@string/favorites_activity_placeholder"
-        android:visibility="gone" />
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/manage_favorites_placeholder_2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/manage_favorites_placeholder"
-        android:layout_centerHorizontal="true"
-        android:background="?attr/selectableItemBackground"
-        android:gravity="center"
-        android:padding="@dimen/normal_margin"
-        android:text="@string/add_favorites"
-        android:textSize="@dimen/bigger_text_size"
-        android:visibility="gone" />
+        <ltechnologies.onionphone.securefilemanager.views.MyRecyclerView
+            android:id="@+id/manage_favorites_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            app:layoutManager="ltechnologies.onionphone.securefilemanager.views.MyLinearLayoutManager" />
 
-</RelativeLayout>
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/manage_favorites_placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="@dimen/activity_margin"
+            android:layout_marginBottom="@dimen/small_margin"
+            android:alpha="0.8"
+            android:gravity="center"
+            android:lineSpacingExtra="@dimen/tiny_margin"
+            android:paddingStart="@dimen/activity_margin"
+            android:paddingTop="@dimen/activity_margin"
+            android:paddingEnd="@dimen/activity_margin"
+            android:text="@string/favorites_activity_placeholder"
+            android:textSize="@dimen/bigger_text_size"
+            android:textStyle="italic"
+            android:visibility="gone" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/manage_favorites_placeholder_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/manage_favorites_placeholder"
+            android:layout_centerHorizontal="true"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center"
+            android:padding="@dimen/normal_margin"
+            android:text="@string/add_favorites"
+            android:textSize="@dimen/bigger_text_size"
+            android:visibility="gone" />
+
+    </RelativeLayout>
+
+</LinearLayout>

@@ -53,4 +53,8 @@
 }
 
 # Keep the BuildConfig
--keep class com.securefilemanager.app.BuildConfig { *; }
+-keep class ltechnologies.onionphone.securefilemanager.BuildConfig { *; }
+
+-dontwarn org.bouncycastle.**
+-dontwarn com.hierynomus.**
+-dontwarn sun.security.x509.X509Key
