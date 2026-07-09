@@ -36,6 +36,7 @@ sshj = "0.39.0"
 commons-net = "3.11.1"
 media3 = "1.5.1"
 viewpager2 = "1.1.0"
+robolectric = "4.14.1"
 
 [libraries]
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -68,6 +69,7 @@ aboutlibraries-core = { group = "com.mikepenz", name = "aboutlibraries-core", ve
 aboutlibraries = { group = "com.mikepenz", name = "aboutlibraries", version.ref = "aboutlibraries" }
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 glide-ksp = { group = "com.github.bumptech.glide", name = "ksp", version.ref = "glide" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

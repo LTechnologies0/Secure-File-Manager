@@ -142,6 +142,7 @@ dependencies {
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.robolectric)
 }
 
 apply(from = rootProject.file("gradle/release-signing.gradle"))
