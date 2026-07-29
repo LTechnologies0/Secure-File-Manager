@@ -32,8 +32,11 @@ class AuthenticationActivity : AppCompatActivity(), View.OnClickListener {
 
         binding.authenticateCoordinatorLayout.setOnClickListener(this)
         binding.authenticateButton.setOnClickListener(this)
+        binding.authenticatePasswordButton.setOnClickListener(this)
 
         mPasswordIsSet = config.isPasswordSet()
+        binding.authenticatePasswordButton.visibility =
+            if (mPasswordIsSet) View.VISIBLE else View.GONE
         mAuthenticationSuccessCallback = {
             if (it) {
                 config.wasAppProtectionHandled = true
@@ -65,17 +68,22 @@ class AuthenticationActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onClick(v: View?) {
-        authenticate()
+        when (v?.id) {
+            R.id.authenticate_password_button -> showAppPasswordDialog()
+            else -> authenticate(preferSystemLock = true)
+        }
     }
 
-    private fun authenticate() {
+    private fun authenticate(preferSystemLock: Boolean = true) {
         if (!config.isAppLock) {
             mAuthenticationSuccessCallback.invoke(true)
             return
         }
         when {
+            preferSystemLock && isBiometricSet() ->
+                mBiometricPrompt.authenticate(createPromptInfo())
+            mPasswordIsSet -> showAppPasswordDialog()
             isBiometricSet() -> mBiometricPrompt.authenticate(createPromptInfo())
-            mPasswordIsSet -> PasswordAuthenticationDialog(this, mAuthenticationSuccessCallback) {}
             else -> {
                 toast(R.string.app_lock_summary_on_warning)
                 quitApp(false)
@@ -83,25 +91,35 @@ class AuthenticationActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    private fun showAppPasswordDialog() {
+        PasswordAuthenticationDialog(this, mAuthenticationSuccessCallback) {
+            authenticate(preferSystemLock = true)
+        }
+    }
+
     private fun createBiometricPrompt(callback: (success: Boolean) -> Unit): BiometricPrompt {
         val executor = ContextCompat.getMainExecutor(this)
-        val activity = this
         return BiometricPrompt(
             this,
             executor,
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    when {
-                        errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON && mPasswordIsSet ->
-                            PasswordAuthenticationDialog(activity, callback) { authenticate() }
-                        errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON && !mPasswordIsSet ->
-                            quitApp(false)
-                        else -> callback(false)
+                    // Stay on lock screen so the user can retry or use the app-password button.
+                    // DEVICE_CREDENTIAL prompts must not set a negative button (API rule).
+                    when (errorCode) {
+                        BiometricPrompt.ERROR_USER_CANCELED,
+                        BiometricPrompt.ERROR_CANCELED,
+                        BiometricPrompt.ERROR_NEGATIVE_BUTTON,
+                        -> callback(false)
+                        else -> {
+                            toast(errString.toString())
+                            callback(false)
+                        }
                     }
                 }
 
                 override fun onAuthenticationFailed() {
-                    // allow retry
+                    // allow retry inside the system sheet
                 }
 
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
@@ -111,17 +129,19 @@ class AuthenticationActivity : AppCompatActivity(), View.OnClickListener {
         )
     }
 
-    private fun createPromptInfo(): BiometricPrompt.PromptInfo =
-        BiometricPrompt.PromptInfo.Builder()
+    private fun createPromptInfo(): BiometricPrompt.PromptInfo {
+        // Match OnionVPN: fingerprint/face OR device PIN/pattern/password (private profiles).
+        // Must not call setNegativeButtonText when DEVICE_CREDENTIAL is allowed.
+        val authenticators =
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        return BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.prompt_info_title))
-            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+            .setSubtitle(getString(R.string.prompt_info_subtitle))
+            .setAllowedAuthenticators(authenticators)
             .setConfirmationRequired(false)
-            .setNegativeButtonText(
-                getString(
-                    if (mPasswordIsSet) R.string.prompt_info_use_app_password else R.string.cancel,
-                ),
-            )
             .build()
+    }
 
     companion object {
         fun getIntent(context: Context) =

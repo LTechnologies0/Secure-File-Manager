@@ -54,7 +54,10 @@ val Context.isBiometricPresent: Boolean
 val Context.isBiometricNotSpecified: Boolean
     get() = BiometricManager.from(this).canAuthenticate(BIOMETRIC_AUTH) == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
 
-private const val BIOMETRIC_AUTH = BiometricManager.Authenticators.BIOMETRIC_STRONG
+/** Same as OnionVPN: Class-3 biometric and/or device PIN/pattern/password (works in private profiles). */
+private const val BIOMETRIC_AUTH =
+    BiometricManager.Authenticators.BIOMETRIC_STRONG or
+        BiometricManager.Authenticators.DEVICE_CREDENTIAL
 
 fun Context.toastLong(id: Int): Toast? = toast(getString(id), Toast.LENGTH_LONG)
 
@@ -446,7 +449,14 @@ fun Context.openAuthenticationActivity() {
 }
 
 fun Context.openAndroidSystemSettings() {
-    this.startActivity(Intent(Settings.ACTION_SETTINGS))
+    val security = Intent(Settings.ACTION_SECURITY_SETTINGS)
+    val intent =
+        if (security.resolveActivity(packageManager) != null) {
+            security
+        } else {
+            Intent(Settings.ACTION_SETTINGS)
+        }
+    this.startActivity(intent)
 }
 
 fun Context.startStopUnlockAppService() {

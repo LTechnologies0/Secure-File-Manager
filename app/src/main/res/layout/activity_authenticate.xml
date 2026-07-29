@@ -46,6 +46,16 @@
                 android:text="@string/authenticate"
                 app:icon="@drawable/ic_lock_open_vector" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/authenticate_password_button"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/medium_margin"
+                android:contentDescription="@string/prompt_info_use_app_password"
+                android:text="@string/prompt_info_use_app_password"
+                android:visibility="gone" />
+
         </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>

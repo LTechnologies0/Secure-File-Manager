@@ -300,6 +300,7 @@
     <string name="authenticate">Authenticate</string>
     <string name="app_unlocked_notification">App is unlocked. Tap to lock app.</string>
     <string name="prompt_info_title">App is locked</string>
+    <string name="prompt_info_subtitle">Confirm with fingerprint, face, or device PIN</string>
     <string name="prompt_info_use_app_password">Use app password</string>
     <string name="password_setup_title">Setup app password</string>
     <string name="password_remove">Remove</string>
@@ -336,12 +337,12 @@
     <string name="app_lock_title">Lock app access</string>
     <string name="app_lock_summary_off">Lock app access is disabled</string>
     <string name="app_lock_summary_on">Lock app access is enabled</string>
-    <string name="app_lock_summary_on_warning">Password or biometric authentication is not set</string>
-    <string name="app_lock_summary_on_warning_biometric">Biometric authenticator is not specified or available</string>
-    <string name="use_biometric_authentication_title">Use biometric</string>
-    <string name="use_biometric_authentication_summary_off">Use also biometric authentication is disabled</string>
-    <string name="use_biometric_authentication_summary_on">Use also biometric authentication is enabled</string>
-    <string name="use_biometric_authentication_summary_on_warning">Biometric authenticator is not specified or available</string>
+    <string name="app_lock_summary_on_warning">Password or device lock is not set</string>
+    <string name="app_lock_summary_on_warning_biometric">No screen lock (PIN / pattern / password) or biometric is available</string>
+    <string name="use_biometric_authentication_title">Use device lock</string>
+    <string name="use_biometric_authentication_summary_off">Device lock (fingerprint, face, or PIN) is disabled</string>
+    <string name="use_biometric_authentication_summary_on">Unlock with fingerprint, face, or device PIN</string>
+    <string name="use_biometric_authentication_summary_on_warning">Set a screen lock in Android Settings first</string>
     <string name="use_24_hour_time_format_title">Use 24-hour time format</string>
     <string name="use_24_hour_time_format_title_summary_off">24-hour time format is disabled</string>
     <string name="use_24_hour_time_format_title_summary_on">24-hour time format is enabled</string>
@@ -353,8 +354,8 @@
     <string name="set_app_password_title">Set app password</string>
     <string name="set_app_password_summary_on">Password is set</string>
     <string name="set_app_password_summary_off">Password is not set</string>
-    <string name="app_open_biometric_settings_summary">Biometric authenticator is not specified, click to open settings</string>
-    <string name="app_lock_info_summary">Biometric authentication is significantly less secure than a password. To improve the security of your files is recommended using only a password to restrict app access. But you can use both.</string>
+    <string name="app_open_biometric_settings_summary">No screen lock is set — tap to open Android Settings</string>
+    <string name="app_lock_info_summary">Device lock (fingerprint, face, or PIN) is convenient, especially in a private profile. An app password is still stronger. You can use either or both.</string>
 
     <!-- Setting sections -->
     <string name="security">Security</string>

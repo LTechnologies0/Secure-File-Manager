@@ -179,6 +179,7 @@
     <string name="authenticate">Authentification</string>
     <string name="app_unlocked_notification">L\'application est déverrouillée. Appuyez pour verrouiller l\'application.</string>
     <string name="prompt_info_title">L\'application est verrouillée</string>
+    <string name="prompt_info_subtitle">Confirmez avec empreinte, visage ou code PIN de l\'appareil</string>
     <string name="prompt_info_use_app_password">Utiliser le mot de passe de l\'application </string>
     <string name="password_setup_title">Configurer le mot de passe de l\'application</string>
     <string name="password_remove">Retirer</string>
@@ -214,12 +215,12 @@
     <string name="app_lock_title">Verrouiller l\'accès à l\'application</string>
     <string name="app_lock_summary_off">Le verrouillage de l\'accès à l\'application est désactivé</string>
     <string name="app_lock_summary_on">Le verrouillage de l\'accès à l\'application est activé</string>
-    <string name="app_lock_summary_on_warning">Le mot de passe ou l\'authentification biométrique n\'est pas défini.</string>
-    <string name="app_lock_summary_on_warning_biometric">L\'authentificateur biométrique n\'est pas spécifié ou disponible</string>
-    <string name="use_biometric_authentication_title">Utiliser la biométrie</string>
-    <string name="use_biometric_authentication_summary_off">L\'utilisation conjointe de l\'authentification biométrique est désactivée</string>
-    <string name="use_biometric_authentication_summary_on">L\'utilisation conjointe de l\'authentification biométrique est activée</string>
-    <string name="use_biometric_authentication_summary_on_warning">L\'authentificateur biométrique n\'est pas spécifié ou disponible</string>
+    <string name="app_lock_summary_on_warning">Le mot de passe ou le verrouillage de l\'appareil n\'est pas défini.</string>
+    <string name="app_lock_summary_on_warning_biometric">Aucun verrouillage d\'écran (PIN / schéma / mot de passe) ni biométrie disponible</string>
+    <string name="use_biometric_authentication_title">Utiliser le verrouillage appareil</string>
+    <string name="use_biometric_authentication_summary_off">Le verrouillage appareil (empreinte, visage ou PIN) est désactivé</string>
+    <string name="use_biometric_authentication_summary_on">Déverrouiller avec empreinte, visage ou code PIN</string>
+    <string name="use_biometric_authentication_summary_on_warning">Définissez d\'abord un verrouillage d\'écran dans les réglages Android</string>
     <string name="use_24_hour_time_format_title">Utiliser le format horaire sur 24 heures </string>
     <string name="use_24_hour_time_format_title_summary_off">Le format horaire sur 24 heures est désactivé</string>
     <string name="use_24_hour_time_format_title_summary_on">Le format horaire sur 24 heures est activé</string>
@@ -231,8 +232,8 @@
     <string name="set_app_password_title">Définir le mot de passe de l\'application</string>
     <string name="set_app_password_summary_on">Le mot de passe est défini</string>
     <string name="set_app_password_summary_off">Le mot de passe n\'est pas défini</string>
-    <string name="app_open_biometric_settings_summary">L\'authentificateur biométrique n\'est pas spécifié, cliquez pour ouvrir les paramètres.</string>
-    <string name="app_lock_info_summary">L\'authentification biométrique est significativement moins sûre qu\'un mot de passe. Afin d\'améliorer la sécurité de vos fichiers, il est recommandé d\'utiliser uniquement un mot de passe pour restreindre l\'accès aux applications. Mais vous pouvez utiliser les deux.</string>
+    <string name="app_open_biometric_settings_summary">Aucun verrouillage d\'écran — appuyez pour ouvrir les réglages Android</string>
+    <string name="app_lock_info_summary">Le verrouillage appareil (empreinte, visage ou PIN) est pratique, surtout en profil privé. Un mot de passe d\'application reste plus fort. Vous pouvez utiliser l\'un, l\'autre, ou les deux.</string>
     <!-- Setting sections -->
     <string name="security">Sécurité</string>
     <string name="file_operations">Opérations sur les fichiers</string>
