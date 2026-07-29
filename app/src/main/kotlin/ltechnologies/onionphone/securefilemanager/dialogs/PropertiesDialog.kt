@@ -16,6 +16,7 @@ import ltechnologies.onionphone.securefilemanager.helpers.ensureBackgroundThread
 import ltechnologies.onionphone.securefilemanager.helpers.sumByInt
 import ltechnologies.onionphone.securefilemanager.helpers.sumByLong
 import ltechnologies.onionphone.securefilemanager.models.FileDirItem
+import ltechnologies.onionphone.securefilemanager.storage.RemotePath
 import java.io.File
 import java.util.*
 
@@ -32,6 +33,25 @@ class PropertiesDialog() {
      * @param path the file path
      */
     constructor(activity: Activity, path: String) : this() {
+        mActivity = activity
+        mInflater = LayoutInflater.from(activity)
+        mResources = activity.resources
+        val binding = DialogPropertiesBinding.inflate(activity.layoutInflater)
+        mPropertyView = binding.propertiesHolder
+
+        if (RemotePath.isRemote(path)) {
+            addProperty(R.string.name, path.trimEnd('/').getFilenameFromPath())
+            addProperty(R.string.path, path)
+            addProperty(R.string.remote_properties_type, activity.getString(R.string.remote_storage))
+            activity.showM3FormDialog(
+                titleId = R.string.properties,
+                customView = binding.root,
+                positiveTextId = R.string.ok,
+                negativeTextId = 0,
+            )
+            return
+        }
+
         if (!activity.getDoesFilePathExist(path)) {
             activity.toast(
                 String.format(
@@ -41,12 +61,6 @@ class PropertiesDialog() {
             )
             return
         }
-
-        mActivity = activity
-        mInflater = LayoutInflater.from(activity)
-        mResources = activity.resources
-        val binding = DialogPropertiesBinding.inflate(activity.layoutInflater)
-        mPropertyView = binding.propertiesHolder
 
         val fileDirItem =
             FileDirItem(path, path.getFilenameFromPath(), activity.getIsPathDirectory(path))

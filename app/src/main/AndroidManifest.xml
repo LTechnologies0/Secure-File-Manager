@@ -201,6 +201,12 @@
             android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
+            android:name=".activities.LegacyMigrationActivity"
+            android:label="@string/legacy_migration_title"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <activity
             android:name=".activities.AboutActivity"
             android:label="@string/about"
             android:parentActivityName=".activities.MainActivity"

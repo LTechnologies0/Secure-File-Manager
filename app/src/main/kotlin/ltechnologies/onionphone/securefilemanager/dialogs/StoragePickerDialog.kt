@@ -81,6 +81,18 @@ class StoragePickerDialog(
 
         addOption(
             layoutParams,
+            ID_REMOTE_NEW,
+            activity.getString(R.string.remote_connect_new),
+            false,
+        ) {
+            mDialog.dismiss()
+            RemoteServersDialog(activity) { root ->
+                callback(root)
+            }
+        }
+
+        addOption(
+            layoutParams,
             ID_TRASH,
             activity.getString(R.string.trash_title),
             false,
@@ -150,5 +162,6 @@ class StoragePickerDialog(
         private const val ID_HIDE = 4
         private const val ID_TRASH = 5
         private const val ID_RECENT = 6
+        private const val ID_REMOTE_NEW = 7
     }
 }

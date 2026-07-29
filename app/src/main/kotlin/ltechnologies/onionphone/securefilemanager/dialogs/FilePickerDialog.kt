@@ -72,17 +72,34 @@ class FilePickerDialog(
         tryUpdateItems()
         setupFavorites()
 
+        val pickFolder = !pickFile
+        if (pickFolder) {
+            binding.filepickerFabConfirm.apply {
+                beVisible()
+                setOnClickListener { verifyPath() }
+            }
+        }
+
         if (showFAB) {
             binding.filepickerFab.apply {
                 beVisible()
                 setOnClickListener { createNewFolder() }
+                if (pickFolder) {
+                    // Sit above the confirm FAB when both are visible
+                    (layoutParams as CoordinatorLayout.LayoutParams).bottomMargin =
+                        activity.resources.getDimension(R.dimen.secondary_fab_bottom_margin).toInt()
+                }
             }
         }
 
-        val secondaryFabBottomMargin =
-            activity.resources.getDimension(
-                if (showFAB) R.dimen.secondary_fab_bottom_margin else R.dimen.activity_margin
-            ).toInt()
+        val primaryFabCount = (if (showFAB) 1 else 0) + (if (pickFolder) 1 else 0)
+        val secondaryFabBottomMargin = activity.resources.getDimension(
+            when (primaryFabCount) {
+                0 -> R.dimen.activity_margin
+                1 -> R.dimen.secondary_fab_bottom_margin
+                else -> R.dimen.fab_move_2
+            }
+        ).toInt()
         binding.fabsHolder.apply {
             (layoutParams as CoordinatorLayout.LayoutParams).bottomMargin = secondaryFabBottomMargin
         }
@@ -107,7 +124,7 @@ class FilePickerDialog(
         mDialog = activity.showM3FormDialog(
             titleId = getTitle(),
             customView = binding.root,
-            positiveTextId = if (!pickFile) R.string.ok else 0,
+            positiveTextId = if (pickFolder) R.string.confirm_selection else 0,
             negativeTextId = R.string.cancel,
         ) { primary, negative, _ ->
             setOnKeyListener { _, i, keyEvent ->
@@ -132,15 +149,17 @@ class FilePickerDialog(
                 dismiss()
             }
 
-            if (!pickFile) {
+            if (pickFolder) {
                 primary.setOnClickListener { verifyPath() }
             }
 
             if (isHide(hideAction) && !activity.config.isHideTutorialShowed) {
+                val tutorialTarget =
+                    if (binding.filepickerFabConfirm.isVisible) binding.filepickerFabConfirm else primary
                 TapTargetView.showFor(
                     this,
                     TapTarget.forView(
-                        primary,
+                        tutorialTarget,
                         activity.getString(R.string.confirm_selection),
                         htmlText(activity.getString(R.string.tutorial_hide_description))
                     ).transparentTarget(true)
@@ -154,8 +173,8 @@ class FilePickerDialog(
 
     private fun createNewFolder() {
         CreateNewFolderDialog(activity, currPath) {
-            callback(it)
-            mDialog.dismiss()
+            currPath = it
+            tryUpdateItems()
         }
     }
 
@@ -171,11 +190,6 @@ class FilePickerDialog(
     }
 
     private fun updateItems(items: ArrayList<FileDirItem>) {
-        if (!containsDirectory(items) && !mFirstUpdate && !pickFile && !showFAB) {
-            verifyPath()
-            return
-        }
-
         val sortedItems = items.sortedWith(compareBy({ !it.isDirectory }, {
             it.name.lowercase(Locale.getDefault())
         }))
@@ -335,8 +349,6 @@ class FilePickerDialog(
         }
         setHiddenVisibility()
     }
-
-    private fun containsDirectory(items: List<FileDirItem>) = items.any { it.isDirectory }
 
     override fun breadcrumbClicked(id: Int) {
         if (id == 0) {

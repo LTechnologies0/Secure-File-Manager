@@ -31,6 +31,7 @@ import ltechnologies.onionphone.securefilemanager.helpers.TapTargetTutorial
 import ltechnologies.onionphone.securefilemanager.helpers.ensureBackgroundThread
 import ltechnologies.onionphone.securefilemanager.databinding.ActivityMainBinding
 import ltechnologies.onionphone.securefilemanager.models.RadioItem
+import ltechnologies.onionphone.securefilemanager.storage.RemotePath
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
@@ -285,6 +286,11 @@ class MainActivity : BaseAbstractActivity() {
     }
 
     private fun toggleDualPane() {
+        val wideEnough = resources.configuration.screenWidthDp >= 840
+        if (!wideEnough && !config.dualPaneEnabled) {
+            toast(R.string.dual_pane_needs_wide_screen)
+            return
+        }
         config.dualPaneEnabled = !config.dualPaneEnabled
         applyDualPane()
         invalidateOptionsMenu()
@@ -392,6 +398,10 @@ class MainActivity : BaseAbstractActivity() {
 
     private fun openPath(path: String, forceRefresh: Boolean = false) {
         var newPath = path
+        if (RemotePath.isRemote(path)) {
+            primaryFragment.openPath(newPath.trimEnd('/').ifEmpty { path }, forceRefresh)
+            return
+        }
         val file = File(path)
         if (file.exists() && !file.isDirectory) {
             newPath = file.parent!!
@@ -400,6 +410,12 @@ class MainActivity : BaseAbstractActivity() {
         }
 
         primaryFragment.openPath(newPath, forceRefresh)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.getStringExtra(EXTRA_OPEN_PATH)?.let { openPath(it, forceRefresh = true) }
     }
 
     private fun goHome() {

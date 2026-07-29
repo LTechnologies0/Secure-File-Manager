@@ -191,7 +191,13 @@
     <string name="proceed_with_deletion">Are you sure you want to proceed with the deletion?</string>
     <string name="deletion_confirmation">Are you sure you want to delete %s?</string>
     <string name="share_hidden_file_confirmation">Are you sure you want to share %s from hidden storage?</string>
-    <string name="share_encrypted_file_confirmation">Share a temporary decrypted copy? Other apps will see the plain file.</string>
+    <string name="share_encrypted_file_confirmation">Share this OpenPGP file as-is? Recipients need the matching private key to open it.</string>
+    <string name="export_encrypted_file_confirmation">Export the encrypted .gpg file as-is?</string>
+    <string name="dual_pane_needs_wide_screen">Dual pane needs a wider screen (tablet / landscape).</string>
+    <string name="sd_card_limited_actions">Some actions are unavailable on SD card without full write access.</string>
+    <string name="remote_create_file_unsupported">Creating empty files on remote storage is not supported — create a folder instead.</string>
+    <string name="remote_properties_type">Remote storage</string>
+    <string name="legacy_migration_decrypt_unavailable">Legacy .aes Keystore decryption is no longer available in this build. You can delete leftover .aes files below.</string>
     <string name="export_to">Export to…</string>
     <string name="remote_storage">Remote</string>
     <string name="remote_connect">Connect remote storage</string>
@@ -210,6 +216,8 @@
     <string name="remote_host_key_accept">Trust and connect</string>
     <string name="remote_display_name">Connection name</string>
     <string name="remote_server_selected">Remote server selected</string>
+    <string name="remote_delete_server">Delete server…</string>
+    <string name="remote_server_deleted">Remote server deleted</string>
     <string name="no_camera_app">No camera app available</string>
     <string name="remote_ftps">Use FTPS (TLS)</string>
     <string name="remote_ftps_implicit">Implicit FTPS (port 990)</string>
@@ -229,7 +237,7 @@
     <string name="trash_delete_confirm">Permanently delete %1$s?</string>
     <string name="trash_delete_permanent">Delete permanently</string>
     <string name="legacy_migration_title">Migrate legacy .aes files</string>
-    <string name="legacy_migration_summary_short">Decrypt old Keystore-encrypted files and re-encrypt with PGP Shield</string>
+    <string name="legacy_migration_summary_short">List and delete leftover Keystore .aes files</string>
     <string name="legacy_migration_summary">%1$d legacy .aes file(s) found</string>
     <string name="legacy_migration_decrypt_all">Decrypt all</string>
     <string name="legacy_migration_encrypt_okc">Encrypt with PGP Shield</string>
@@ -244,7 +252,7 @@
     <string name="legacy_aes_use_migration">Legacy .aes files must be migrated in Settings → Encryption</string>
     <string name="already_encrypted_pgp">File is already OpenPGP encrypted</string>
     <string name="encryption_settings_title">Encryption</string>
-    <string name="encryption_settings_summary">PGP Shield and legacy migration</string>
+    <string name="encryption_settings_summary">PGP Shield and leftover .aes cleanup</string>
     <string name="open_files_internally_title">Open files in app</string>
     <string name="open_files_internally_summary">Use built-in viewers for text, images, and media</string>
     <string name="cut">Cut</string>
@@ -281,8 +289,8 @@
     <string name="documents_provider_title">Expose hidden storage via SAF</string>
     <string name="documents_provider_summary_on">Other apps can browse hidden and encrypted files through the system file picker</string>
     <string name="documents_provider_summary_off">Hidden storage is not exposed to other apps</string>
-    <string name="require_auth_for_crypto_title">Require unlock for new encryption</string>
-    <string name="require_auth_for_crypto_summary">New encrypted files use a device-auth key. Decrypt old files before toggling.</string>
+    <string name="require_auth_for_crypto_title">Require unlock before encrypting</string>
+    <string name="require_auth_for_crypto_summary">Ask for app password or biometrics before starting a new PGP encryption</string>
     <string name="rsync_title">Rsync sync</string>
     <string name="rsync_not_bundled">Not bundled (GPLv3 / size gate). Use SFTP for now.</string>
     <string name="yes">Yes</string>
@@ -375,6 +383,8 @@
     <string name="compress">Create zip</string>
     <string name="decompress">Extract</string>
     <string name="compress_as">Create zip</string>
+    <string name="compress_encrypt_pgp">Encrypt with PGP Shield</string>
+    <string name="compress_encrypt_pgp_hint">PGP Shield will pack and encrypt the selection as a .gpg archive (compression included).</string>
     <string name="compressing">Creating zip…</string>
     <string name="starting">Starting…</string>
     <string name="decompressing">Extracting…</string>
@@ -439,7 +449,7 @@
     <string name="intro_configure">Configure</string>
 
     <string name="intro_other_title">Other features</string>
-    <string name="intro_other_feature_encrypted_zip"><![CDATA[Create or extract zip files or <b>encrypted</b> zip files.]]></string>
+    <string name="intro_other_feature_encrypted_zip"><![CDATA[Create zip archives, or optionally encrypt them with <b>PGP Shield</b> as a .gpg archive.]]></string>
     <string name="feature_media_saving"><![CDATA[Create a photo or video to a specified destination.<br/> <small><i>(E.g.: directly take a media file to hidden storage)</i></small>]]></string>
 
     <!-- Password prompt dialog -->

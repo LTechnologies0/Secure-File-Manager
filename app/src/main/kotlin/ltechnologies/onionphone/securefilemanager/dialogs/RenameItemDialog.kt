@@ -1,10 +1,10 @@
 package ltechnologies.onionphone.securefilemanager.dialogs
 
-import androidx.appcompat.app.AlertDialog
 import ltechnologies.onionphone.securefilemanager.R
 import ltechnologies.onionphone.securefilemanager.activities.BaseAbstractActivity
 import ltechnologies.onionphone.securefilemanager.databinding.DialogRenameItemBinding
 import ltechnologies.onionphone.securefilemanager.extensions.*
+import ltechnologies.onionphone.securefilemanager.storage.RemotePath
 import java.util.*
 
 class RenameItemDialog(
@@ -14,7 +14,7 @@ class RenameItemDialog(
 ) {
     init {
         var ignoreClicks = false
-        val fullName = path.getFilenameFromPath()
+        val fullName = path.trimEnd('/').getFilenameFromPath()
         val dotAt = fullName.lastIndexOf(".")
         var name = fullName
 
@@ -57,37 +57,47 @@ class RenameItemDialog(
                     return@setOnClickListener
                 }
 
-                val updatedPaths = ArrayList<String>()
-                updatedPaths.add(path)
                 if (newExtension.isNotEmpty()) {
                     newName += ".$newExtension"
                 }
 
-                if (!activity.getDoesFilePathExist(path)) {
-                    activity.toast(
-                        String.format(
-                            activity.getString(R.string.source_file_doesnt_exist),
-                            path
-                        )
-                    )
-                    return@setOnClickListener
+                val newPath = if (RemotePath.isRemote(path) && path.endsWith("/")) {
+                    "${path.getParentPath().trimEnd('/')}/$newName/"
+                } else {
+                    "${path.getParentPath()}/$newName"
                 }
 
-                val newPath = "${path.getParentPath()}/$newName"
-                if (activity.getDoesFilePathExist(newPath)) {
-                    activity.toast(R.string.name_taken)
-                    return@setOnClickListener
-                }
-
-                updatedPaths.add(newPath)
                 ignoreClicks = true
-                activity.renameFile(path, newPath) {
-                    ignoreClicks = false
-                    if (it) {
-                        callback(newPath)
-                        dismiss()
-                    } else {
-                        activity.toast(R.string.unknown_error_occurred)
+                activity.getDoesFilePathExistAsync(path) { sourceExists ->
+                    if (!sourceExists) {
+                        activity.runOnUiThread {
+                            ignoreClicks = false
+                            activity.toast(
+                                String.format(
+                                    activity.getString(R.string.source_file_doesnt_exist),
+                                    path
+                                )
+                            )
+                        }
+                        return@getDoesFilePathExistAsync
+                    }
+                    activity.getDoesFilePathExistAsync(newPath) { taken ->
+                        activity.runOnUiThread {
+                            if (taken) {
+                                ignoreClicks = false
+                                activity.toast(R.string.name_taken)
+                                return@runOnUiThread
+                            }
+                            activity.renameFile(path, newPath) {
+                                ignoreClicks = false
+                                if (it) {
+                                    callback(newPath)
+                                    dismiss()
+                                } else {
+                                    activity.toast(R.string.unknown_error_occurred)
+                                }
+                            }
+                        }
                     }
                 }
             }

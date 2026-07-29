@@ -6,6 +6,9 @@ import ltechnologies.onionphone.securefilemanager.R
 import ltechnologies.onionphone.securefilemanager.activities.BaseAbstractActivity
 import ltechnologies.onionphone.securefilemanager.databinding.DialogCreateNewBinding
 import ltechnologies.onionphone.securefilemanager.extensions.*
+import ltechnologies.onionphone.securefilemanager.helpers.ensureBackgroundThread
+import ltechnologies.onionphone.securefilemanager.storage.RemoteBrowser
+import ltechnologies.onionphone.securefilemanager.storage.RemotePath
 import java.io.File
 import java.io.IOException
 
@@ -29,25 +32,43 @@ class CreateNewItemDialog(
                 if (name.isEmpty()) {
                     activity.toast(R.string.empty_name)
                 } else if (name.isAValidFilename()) {
-                    val newPath = "$path/$name"
-                    if (activity.getDoesFilePathExist(newPath)) {
-                        activity.toast(R.string.name_taken)
+                    val isDirectory =
+                        binding.dialogRadioGroup.checkedRadioButtonId == R.id.dialog_radio_directory
+                    if (RemotePath.isRemote(path) && !isDirectory) {
+                        activity.toast(R.string.remote_create_file_unsupported)
                         return@OnClickListener
                     }
-
-                    if (binding.dialogRadioGroup.checkedRadioButtonId == R.id.dialog_radio_directory) {
-                        createDirectory(newPath, this) {
-                            callback(it)
-                        }
+                    val newPath = if (RemotePath.isRemote(path)) {
+                        val base = path.trimEnd('/')
+                        if (isDirectory) "$base/$name/" else "$base/$name"
                     } else {
-                        createFile(newPath, this) {
-                            callback(it)
-                        }
+                        "$path/$name"
                     }
+                    createWithExistsCheck(newPath, isDirectory, this)
                 } else {
                     activity.toast(R.string.invalid_name)
                 }
             })
+        }
+    }
+
+    private fun createWithExistsCheck(
+        newPath: String,
+        isDirectory: Boolean,
+        alertDialog: AlertDialog,
+    ) {
+        activity.getDoesFilePathExistAsync(newPath) { exists ->
+            activity.runOnUiThread {
+                if (exists) {
+                    activity.toast(R.string.name_taken)
+                    return@runOnUiThread
+                }
+                if (isDirectory) {
+                    createDirectory(newPath, alertDialog) { callback(it) }
+                } else {
+                    createFile(newPath, alertDialog) { callback(it) }
+                }
+            }
         }
     }
 
@@ -57,6 +78,17 @@ class CreateNewItemDialog(
         callback: (Boolean) -> Unit
     ) {
         when {
+            RemotePath.isRemote(path) -> ensureBackgroundThread {
+                try {
+                    RemoteBrowser.mkdir(activity, path.trimEnd('/'))
+                    activity.runOnUiThread { success(alertDialog) }
+                } catch (e: Exception) {
+                    activity.runOnUiThread {
+                        activity.showErrorToast(e)
+                        callback(false)
+                    }
+                }
+            }
             activity.needsStupidWritePermissions(path) -> activity.handleSAFDialog(path) {
                 if (!it) {
                     return@handleSAFDialog
@@ -76,6 +108,8 @@ class CreateNewItemDialog(
             else -> {
                 if (File(path).mkdirs()) {
                     success(alertDialog)
+                } else {
+                    callback(false)
                 }
             }
         }
@@ -107,6 +141,8 @@ class CreateNewItemDialog(
                 else -> {
                     if (File(path).createNewFile()) {
                         success(alertDialog)
+                    } else {
+                        callback(false)
                     }
                 }
             }

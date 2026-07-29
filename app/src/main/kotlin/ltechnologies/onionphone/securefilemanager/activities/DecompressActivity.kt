@@ -6,20 +6,25 @@ import android.view.MenuItem
 import androidx.activity.OnBackPressedCallback
 import ltechnologies.onionphone.securefilemanager.R
 import ltechnologies.onionphone.securefilemanager.adapters.DecompressItemsAdapter
+import ltechnologies.onionphone.securefilemanager.databinding.ActivityDecompressBinding
+import ltechnologies.onionphone.securefilemanager.dialogs.FilePickerDialog
+import ltechnologies.onionphone.securefilemanager.dialogs.PasswordPromptDialog
 import ltechnologies.onionphone.securefilemanager.extensions.decompressZip
 import ltechnologies.onionphone.securefilemanager.extensions.getFilenameFromPath
 import ltechnologies.onionphone.securefilemanager.extensions.getParentPath
 import ltechnologies.onionphone.securefilemanager.extensions.showErrorToast
-import ltechnologies.onionphone.securefilemanager.databinding.ActivityDecompressBinding
+import ltechnologies.onionphone.securefilemanager.extensions.toast
 import ltechnologies.onionphone.securefilemanager.helpers.ensureBackgroundThread
 import ltechnologies.onionphone.securefilemanager.models.ListItem
 import net.lingala.zip4j.ZipFile
+import net.lingala.zip4j.exception.ZipException
 
 class DecompressActivity : BaseAbstractActivity() {
     private lateinit var binding: ActivityDecompressBinding
     private val allFiles = ArrayList<ListItem>()
     private var currentPath = ""
     private var zipPath = ""
+    private var zipPassword: CharArray? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,13 +38,7 @@ class DecompressActivity : BaseAbstractActivity() {
             return
         }
         binding.decompressToolbar.title = zipPath.getFilenameFromPath()
-        ensureBackgroundThread {
-            val items = loadZipListItems(zipPath)
-            runOnUiThread {
-                allFiles.addAll(items)
-                updateCurrentPath("")
-            }
-        }
+        loadArchive()
 
         onBackPressedDispatcher.addCallback(
             this,
@@ -70,13 +69,65 @@ class DecompressActivity : BaseAbstractActivity() {
         return true
     }
 
+    private fun loadArchive() {
+        ensureBackgroundThread {
+            try {
+                val zip = ZipFile(zipPath)
+                if (zip.isEncrypted) {
+                    runOnUiThread {
+                        PasswordPromptDialog(
+                            this,
+                            String.format(
+                                getString(R.string.decompress_password_title),
+                                zipPath.getFilenameFromPath(),
+                            ),
+                            onCancel = { finish() },
+                        ) { password ->
+                            zipPassword = password
+                            ensureBackgroundThread {
+                                try {
+                                    val items = loadZipListItems(zipPath, password)
+                                    runOnUiThread {
+                                        allFiles.clear()
+                                        allFiles.addAll(items)
+                                        updateCurrentPath("")
+                                    }
+                                } catch (e: Exception) {
+                                    runOnUiThread {
+                                        showErrorToast(e)
+                                        finish()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    val items = loadZipListItems(zipPath, null)
+                    runOnUiThread {
+                        allFiles.clear()
+                        allFiles.addAll(items)
+                        updateCurrentPath("")
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    showErrorToast(e)
+                    finish()
+                }
+            }
+        }
+    }
+
     private fun updateCurrentPath(path: String) {
         currentPath = path
         try {
             val listItems = getFolderItems(currentPath)
             DecompressItemsAdapter(this, listItems, binding.decompressList) {
-                if ((it as ListItem).isDirectory) {
-                    updateCurrentPath(it.path)
+                val listItem = it as ListItem
+                if (listItem.isDirectory) {
+                    updateCurrentPath(listItem.path)
+                } else {
+                    extractSingleFile(listItem.path)
                 }
             }.apply {
                 binding.decompressList.adapter = this
@@ -86,9 +137,41 @@ class DecompressActivity : BaseAbstractActivity() {
         }
     }
 
+    private fun extractSingleFile(entryName: String) {
+        FilePickerDialog(
+            this,
+            pickFile = false,
+            showFAB = true,
+        ) { destination ->
+            ensureBackgroundThread {
+                try {
+                    val pass = zipPassword
+                    val zip = if (pass == null || pass.isEmpty()) {
+                        ZipFile(zipPath)
+                    } else {
+                        ZipFile(zipPath, pass)
+                    }
+                    zip.extractFile(entryName, destination)
+                    runOnUiThread {
+                        toast(R.string.decompression_successful)
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        toast(R.string.decompressing_failed)
+                        if (e is ZipException && e.message != null) {
+                            toast(e.message!!)
+                        } else {
+                            showErrorToast(e)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private fun decompress() {
         this.decompressHandle(zipPath) { destination, password ->
-            this.decompressZip(zipPath, destination, password)
+            this.decompressZip(zipPath, destination, password ?: zipPassword)
         }
     }
 
@@ -107,9 +190,14 @@ class DecompressActivity : BaseAbstractActivity() {
             .toMutableList() as ArrayList<ListItem>
     }
 
-    private fun loadZipListItems(path: String): List<ListItem> {
+    private fun loadZipListItems(path: String, password: CharArray?): List<ListItem> {
+        val zip = if (password == null || password.isEmpty()) {
+            ZipFile(path)
+        } else {
+            ZipFile(path, password)
+        }
         val items = ArrayList<ListItem>()
-        ZipFile(path).fileHeaders.forEach { fileHeader ->
+        zip.fileHeaders.forEach { fileHeader ->
             val filename = fileHeader.fileName.removeSuffix("/")
             items.add(
                 ListItem(

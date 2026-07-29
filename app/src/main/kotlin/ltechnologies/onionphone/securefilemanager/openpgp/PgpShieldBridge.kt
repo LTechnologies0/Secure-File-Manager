@@ -59,6 +59,30 @@ object PgpShieldBridge {
         activity.launchPgpShieldIntent(intent, ACTION_ENCRYPT_FOLDER)
     }
 
+    /**
+     * Packs [sourcePaths] (files and/or folders) into one OpenPGP archive via PGP Shield.
+     * Compression is handled by PGP Shield (GpgTar), not local zip.
+     */
+    fun encryptAsArchive(
+        activity: BaseAbstractActivity,
+        sourcePaths: List<String>,
+        outputDir: String,
+        archiveName: String,
+    ) {
+        val intent = buildSelectionArchiveIntent(activity, sourcePaths, outputDir, archiveName)
+        if (intent == null) {
+            activity.toast(
+                if (resolvePackage(activity, ACTION_ENCRYPT) == null) {
+                    ltechnologies.onionphone.securefilemanager.R.string.pgpshield_missing
+                } else {
+                    ltechnologies.onionphone.securefilemanager.R.string.unknown_error_occurred
+                },
+            )
+            return
+        }
+        activity.launchPgpShieldIntent(intent, ACTION_ENCRYPT_FOLDER)
+    }
+
     fun decrypt(activity: BaseAbstractActivity, paths: List<String>) {
         activity.launchPgpShield(paths, ACTION_DECRYPT)
     }
@@ -116,6 +140,55 @@ object PgpShieldBridge {
         if (files.isEmpty()) {
             return null
         }
+        return buildArchiveIntent(
+            activity = activity,
+            files = files,
+            sourcePaths = listOf(folderPath),
+            outputDir = folder.parent ?: return null,
+            archiveName = "${folder.name}.gpg",
+            folderLabel = folder.name,
+        )
+    }
+
+    fun buildSelectionArchiveIntent(
+        activity: BaseAbstractActivity,
+        sourcePaths: List<String>,
+        outputDir: String,
+        archiveName: String,
+    ): Intent? {
+        val files = mutableListOf<Pair<String, File>>()
+        sourcePaths.forEach { path ->
+            val item = File(path)
+            when {
+                item.isDirectory -> {
+                    val parent = item.parentFile ?: return@forEach
+                    collectEncryptableFiles(parent, item, files)
+                }
+                item.isFile && !path.isOpenPgpFile() -> files.add(item.name to item)
+            }
+        }
+        if (files.isEmpty()) {
+            return null
+        }
+        val label = archiveName.removeSuffix(".gpg").ifEmpty { archiveName }
+        return buildArchiveIntent(
+            activity = activity,
+            files = files,
+            sourcePaths = sourcePaths,
+            outputDir = outputDir,
+            archiveName = if (archiveName.endsWith(".gpg")) archiveName else "$archiveName.gpg",
+            folderLabel = label,
+        )
+    }
+
+    private fun buildArchiveIntent(
+        activity: BaseAbstractActivity,
+        files: List<Pair<String, File>>,
+        sourcePaths: List<String>,
+        outputDir: String,
+        archiveName: String,
+        folderLabel: String,
+    ): Intent? {
         val pkg = resolvePackage(activity.packageManager, ACTION_ENCRYPT) ?: return null
         val uris = ArrayList(files.map { activity.getUriForFile(it.second) })
         val relativePaths = ArrayList(files.map { it.first })
@@ -125,10 +198,10 @@ object PgpShieldBridge {
             type = "*/*"
             putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
             putStringArrayListExtra(EXTRA_RELATIVE_PATHS, relativePaths)
-            putStringArrayListExtra(EXTRA_SOURCE_PATHS, arrayListOf(folderPath))
-            putExtra(EXTRA_OUTPUT_PATH, folder.parent)
-            putExtra(EXTRA_ARCHIVE_NAME, "${folder.name}.gpg")
-            putExtra(EXTRA_FOLDER_LABEL, folder.name)
+            putStringArrayListExtra(EXTRA_SOURCE_PATHS, ArrayList(sourcePaths))
+            putExtra(EXTRA_OUTPUT_PATH, outputDir)
+            putExtra(EXTRA_ARCHIVE_NAME, archiveName)
+            putExtra(EXTRA_FOLDER_LABEL, folderLabel)
             putExtra(EXTRA_DELETE_SOURCE, !activity.config.keepAfterEncryptionOperation)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             uris.forEach { uri ->

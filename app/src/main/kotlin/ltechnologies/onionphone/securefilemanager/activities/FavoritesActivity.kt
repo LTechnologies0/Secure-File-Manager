@@ -1,5 +1,6 @@
 package ltechnologies.onionphone.securefilemanager.activities
 
+import android.content.Intent
 import android.graphics.Paint
 import android.os.Bundle
 import android.view.Menu
@@ -51,7 +52,14 @@ class FavoritesActivity : BaseAbstractActivity(), RefreshRecyclerViewListener {
             }
         }
 
-        ManageFavoritesAdapter(this, favorites, this, binding.manageFavoritesList) { }.apply {
+        ManageFavoritesAdapter(this, favorites, this, binding.manageFavoritesList) { path ->
+            startActivity(
+                Intent(this, MainActivity::class.java).apply {
+                    putExtra(MainActivity.EXTRA_OPEN_PATH, path as String)
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                },
+            )
+        }.apply {
             binding.manageFavoritesList.adapter = this
         }
     }

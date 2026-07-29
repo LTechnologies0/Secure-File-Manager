@@ -26,7 +26,6 @@ import ltechnologies.onionphone.securefilemanager.models.ListItem
 import ltechnologies.onionphone.securefilemanager.models.RadioItem
 import ltechnologies.onionphone.securefilemanager.services.ZipManagerService
 import ltechnologies.onionphone.securefilemanager.services.ZipManagerService.Companion.EXTRA_DESTINATION
-import ltechnologies.onionphone.securefilemanager.services.ZipManagerService.Companion.EXTRA_PASSWORD
 import ltechnologies.onionphone.securefilemanager.services.ZipManagerService.Companion.EXTRA_PATH
 import ltechnologies.onionphone.securefilemanager.views.FastScroller
 import ltechnologies.onionphone.securefilemanager.views.MyRecyclerView
@@ -46,6 +45,7 @@ class ItemsAdapter(
 
     private var currentItemsHash = listItems.hashCode()
     private var textToHighlight = ""
+    private var sdActionsHintShown = false
 
     init {
         setHasStableIds(true)
@@ -75,6 +75,7 @@ class ItemsAdapter(
             findItem(R.id.cab_open_with).isVisible = isOneFileSelected() && !isPathRemote
             findItem(R.id.cab_open_as).isVisible = isOneFileSelected() && !isPathRemote
             findItem(R.id.cab_set_as).isVisible = isOneFileSelected() && !isPathRemote
+            findItem(R.id.cab_share).isVisible = !isPathRemote
             findItem(R.id.cab_export).isVisible = isOneFileSelected() && !isPathRemote
             findItem(R.id.cab_hide).isVisible = !isPathOnHidden && !isPathRemote
             findItem(R.id.cab_unhide).isVisible = isPathOnHidden && !isPathRemote
@@ -92,6 +93,7 @@ class ItemsAdapter(
                         !it.isDirectory && it.path.isOpenPgpFile()
                     } &&
                     !isPathOnSd
+            findItem(R.id.cab_properties).isVisible = true
             findItem(R.id.cab_cut).isVisible = !isPathRemote && !isPathOnSd
             findItem(R.id.cab_copy_clipboard).isVisible = !isPathRemote && !isPathOnSd
             findItem(R.id.cab_paste).isVisible =
@@ -99,6 +101,12 @@ class ItemsAdapter(
             findItem(R.id.cab_copy_to).isVisible = true
             findItem(R.id.cab_move_to).isVisible = true
             findItem(R.id.cab_delete).isVisible = true
+        }
+        if (isPathOnSd && selectedKeys.isNotEmpty()) {
+            if (!sdActionsHintShown) {
+                sdActionsHintShown = true
+                activity.toast(R.string.sd_card_limited_actions)
+            }
         }
     }
 
@@ -452,14 +460,21 @@ class ItemsAdapter(
 
     private fun compressSelection() {
         val firstPath = getFirstSelectedItemPath()
-        CompressAsDialog(activity, firstPath) { destination ->
+        CompressAsDialog(activity, firstPath) { destination, encryptWithPgp ->
             val paths = getSelectedFileDirItems().map { it.path }
-            val startIntent = Intent(activity, ZipManagerService::class.java).apply {
-                action = ZipManagerService.ACTION_COMPRESSION
-                putStringArrayListExtra(EXTRA_PATH, ArrayList(paths))
-                putExtra(EXTRA_DESTINATION, destination)
+            if (encryptWithPgp) {
+                val archiveName = destination.getFilenameFromPath()
+                val outputDir = destination.getParentPath()
+                activity.onPgpShieldResult = { listener?.refreshItems() }
+                PgpShieldBridge.encryptAsArchive(activity, paths, outputDir, archiveName)
+            } else {
+                val startIntent = Intent(activity, ZipManagerService::class.java).apply {
+                    action = ZipManagerService.ACTION_COMPRESSION
+                    putStringArrayListExtra(EXTRA_PATH, ArrayList(paths))
+                    putExtra(EXTRA_DESTINATION, destination)
+                }
+                activity.startService(startIntent)
             }
-            activity.startService(startIntent)
             activity.runOnUiThread {
                 finishActMode()
             }

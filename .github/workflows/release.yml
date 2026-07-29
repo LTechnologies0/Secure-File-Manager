@@ -113,7 +113,7 @@ jobs:
           tag_name: ${{ steps.meta.outputs.tag }}
           name: Secure File Manager ${{ steps.meta.outputs.version }}
           generate_release_notes: true
-          prerelease: true
+          prerelease: false
           latest: true
           body_path: dist/release/ABI_LIST.md
           files: |

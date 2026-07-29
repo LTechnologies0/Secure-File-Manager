@@ -240,6 +240,13 @@ abstract class RecyclerViewAdapter(
         }
     }
 
+    fun selectItemAt(position: Int) {
+        if (!actModeCallback.isSelectable) {
+            activity.startSupportActionMode(actModeCallback)
+        }
+        toggleItemSelection(true, position, true)
+    }
+
     fun finishActMode() {
         actMode?.finish()
     }

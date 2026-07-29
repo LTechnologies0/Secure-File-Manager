@@ -255,17 +255,13 @@ abstract class SettingsAbstractFragment : PreferenceFragmentCompat() {
             title = getString(R.string.remote_saved_servers)
             summary = getString(R.string.remote_connect_summary)
             setOnPreferenceClickListener {
-                RemoteServersDialog(requireActivity() as BaseAbstractActivity) { }
+                RemoteServersDialog(requireActivity() as BaseAbstractActivity)
                 true
             }
         }
 
-    protected fun initRsyncStatus(): Preference =
-        Preference(requireContext()).apply {
-            title = getString(R.string.rsync_title)
-            summary = ltechnologies.onionphone.securefilemanager.storage.RsyncGate.summary(requireContext())
-            isEnabled = ltechnologies.onionphone.securefilemanager.storage.RsyncGate.isBundled()
-        }
+    protected fun initRsyncStatus(): Preference? = null
+
 
     protected fun initTrashRestore(): Preference =
         Preference(requireContext()).apply {

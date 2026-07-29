@@ -9,6 +9,7 @@ import ltechnologies.onionphone.securefilemanager.extensions.value
 class PasswordPromptDialog(
     val activity: AppCompatActivity,
     val title: String?,
+    val onCancel: (() -> Unit)? = null,
     val callback: (password: CharArray) -> Unit
 ) {
     private val binding = DialogPasswordPromptBinding.inflate(activity.layoutInflater)
@@ -21,8 +22,13 @@ class PasswordPromptDialog(
             positiveTextId = R.string.ok,
             negativeTextId = R.string.cancel,
             canceledOnTouchOutside = false,
-        ) { primary, _, _ ->
+            onCancel = { onCancel?.invoke() },
+        ) { primary, negative, _ ->
             val password = binding.password
+            negative.setOnClickListener {
+                dismiss()
+                onCancel?.invoke()
+            }
             primary.setOnClickListener {
                 dismiss()
                 callback(password.value.toCharArray())

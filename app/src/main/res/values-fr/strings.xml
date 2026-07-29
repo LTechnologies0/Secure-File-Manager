@@ -166,6 +166,13 @@
     <string name="proceed_with_deletion">Êtes-vous sûr de vouloir procéder à la suppression?</string>
     <string name="deletion_confirmation">Voulez-vous vraiment supprimer %s?</string>
     <string name="share_hidden_file_confirmation">Voulez-vous vraiment partager %s depuis le stockage occulté?</string>
+    <string name="share_encrypted_file_confirmation">Partager ce fichier OpenPGP tel quel ? Le destinataire a besoin de la clé privée correspondante pour l\'ouvrir.</string>
+    <string name="export_encrypted_file_confirmation">Exporter le fichier .gpg chiffré tel quel ?</string>
+    <string name="dual_pane_needs_wide_screen">Le double panneau nécessite un écran plus large (tablette / paysage).</string>
+    <string name="sd_card_limited_actions">Certaines actions sont indisponibles sur la carte SD sans accès en écriture complet.</string>
+    <string name="remote_create_file_unsupported">La création de fichiers vides sur un stockage distant n\'est pas prise en charge — créez un dossier à la place.</string>
+    <string name="remote_properties_type">Stockage distant</string>
+    <string name="legacy_migration_decrypt_unavailable">Le déchiffrement Keystore .aes n\'est plus disponible dans cette version. Vous pouvez supprimer les fichiers .aes restants ci-dessous.</string>
     <string name="yes">Oui</string>
     <string name="no">Non</string>
     <!-- Authentication -->
@@ -250,6 +257,8 @@
     <string name="compress">Créer une archive zip</string>
     <string name="decompress">Extraire</string>
     <string name="compress_as">Créer zip</string>
+    <string name="compress_encrypt_pgp">Chiffrer avec PGP Shield</string>
+    <string name="compress_encrypt_pgp_hint">PGP Shield empaquette et chiffre la sélection en archive .gpg (compression incluse).</string>
     <string name="compressing">Création du zip…</string>
     <string name="starting">Démarrage…</string>
     <string name="decompressing">Extraction…</string>
@@ -305,7 +314,7 @@
     <string name="intro_lock_title">Configuration du verrouillage de l\'application</string>
     <string name="intro_lock_warning">Il est fortement recommandé d\'activer le verrouillage de l\'accès à l\'application afin de protéger vos secrets.</string>
     <string name="intro_other_title">Autres fonctionnalités</string>
-    <string name="intro_other_feature_encrypted_zip"><![CDATA[Créé, extrayez ou <b>chiffré</b> des fichiers zip.]]></string>
+    <string name="intro_other_feature_encrypted_zip"><![CDATA[Créez des archives zip, ou chiffrez-les optionnellement avec <b>PGP Shield</b> en archive .gpg.]]></string>
     <string name="feature_media_saving"><![CDATA[Créer une photo ou une vidéo vers une destination spécifiée.<br/> <small><i>(Par ex: transférer directement un fichier multimédia vers le stockage occulté)</i></small>]]></string>
     <!-- Password prompt dialog -->
     <string name="password_prompt_title">Entrer le mot de passe</string>
@@ -336,12 +345,15 @@
     <string name="trash_empty">La corbeille est vide</string>
     <string name="trash_restored">Fichier restauré</string>
     <string name="trash_restore">Restaurer</string>
+    <string name="remote_delete_server">Supprimer un serveur…</string>
+    <string name="remote_server_deleted">Serveur distant supprimé</string>
+    <string name="remote_connect_new">Connecter un nouveau serveur…</string>
     <string name="trash_empty_all">Vider la corbeille</string>
     <string name="trash_empty_confirm">Supprimer définitivement tous les éléments de la corbeille ?</string>
     <string name="trash_delete_confirm">Supprimer définitivement %1$s ?</string>
     <string name="trash_delete_permanent">Supprimer définitivement</string>
     <string name="legacy_migration_title">Migrer les fichiers .aes</string>
-    <string name="legacy_migration_summary_short">Déchiffrer les anciens fichiers Keystore et rechiffrer avec PGP Shield</string>
+    <string name="legacy_migration_summary_short">Lister et supprimer les anciens fichiers Keystore .aes</string>
     <string name="legacy_migration_summary">%1$d fichier(s) .aes trouvé(s)</string>
     <string name="legacy_migration_decrypt_all">Tout déchiffrer</string>
     <string name="legacy_migration_encrypt_okc">Chiffrer avec PGP Shield</string>
@@ -356,7 +368,9 @@
     <string name="legacy_aes_use_migration">Les .aes doivent être migrés dans Réglages → Chiffrement</string>
     <string name="already_encrypted_pgp">Fichier déjà chiffré OpenPGP</string>
     <string name="encryption_settings_title">Chiffrement</string>
-    <string name="encryption_settings_summary">PGP Shield et migration</string>
+    <string name="encryption_settings_summary">PGP Shield et nettoyage .aes restants</string>
+    <string name="require_auth_for_crypto_title">Exiger le déverrouillage avant chiffrement</string>
+    <string name="require_auth_for_crypto_summary">Demander le mot de passe ou la biométrie avant un nouveau chiffrement PGP</string>
     <string name="open_files_internally_title">Ouvrir dans l\'app</string>
     <string name="open_files_internally_summary">Visionneuses intégrées pour texte, images et médias</string>
     <string name="cut">Couper</string>

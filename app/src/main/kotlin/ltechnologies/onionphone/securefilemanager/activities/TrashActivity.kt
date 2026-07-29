@@ -57,7 +57,14 @@ class TrashActivity : BaseAbstractActivity() {
         invalidateOptionsMenu()
         binding.trashPlaceholder.beVisibleIf(items.isEmpty())
         binding.trashList.beVisibleIf(items.isNotEmpty())
-        adapter = TrashedItemAdapter(this, ArrayList(items), ::loadTrash, binding.trashList) { }
+        adapter = TrashedItemAdapter(this, ArrayList(items), ::loadTrash, binding.trashList) { item ->
+            val position = items.indexOfFirst {
+                it.trashPath == (item as TrashManager.TrashedItem).trashPath
+            }
+            if (position >= 0) {
+                adapter?.selectItemAt(position)
+            }
+        }
         binding.trashList.adapter = adapter
     }
 

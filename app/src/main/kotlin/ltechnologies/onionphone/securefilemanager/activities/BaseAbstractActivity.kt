@@ -17,8 +17,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ProcessLifecycleOwner
 import ltechnologies.onionphone.securefilemanager.R
+import ltechnologies.onionphone.securefilemanager.dialogs.ConfirmationDialog
 import ltechnologies.onionphone.securefilemanager.dialogs.FileConflictDialog
 import ltechnologies.onionphone.securefilemanager.dialogs.FilePickerDialog
+import ltechnologies.onionphone.securefilemanager.dialogs.PasswordAuthenticationDialog
 import ltechnologies.onionphone.securefilemanager.dialogs.PasswordPromptDialog
 import ltechnologies.onionphone.securefilemanager.extensions.*
 import ltechnologies.onionphone.securefilemanager.helpers.*
@@ -126,46 +128,59 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
     }
 
     fun launchPgpShield(paths: List<String>, action: String) {
-        pendingPgpShieldAction = action
-        val intent = PgpShieldBridge.buildIntent(this, paths, action)
-        if (intent == null) {
-            pendingPgpShieldAction = null
-            // #region agent log
-            ltechnologies.onionphone.securefilemanager.helpers.DebugAgentLog.log(
-                location = "BaseAbstractActivity.kt:launchPgpShield",
-                message = "intent build failed",
-                data = mapOf("action" to action, "pathCount" to paths.size),
-                hypothesisId = "B",
-            )
-            // #endregion
-            toast(
-                if (PgpShieldBridge.resolvePackage(this, action) == null) {
-                    R.string.pgpshield_missing
-                } else {
-                    R.string.unknown_error_occurred
-                },
-            )
-            return
+        val launch: () -> Unit = {
+            pendingPgpShieldAction = action
+            val intent = PgpShieldBridge.buildIntent(this, paths, action)
+            if (intent == null) {
+                pendingPgpShieldAction = null
+                toast(
+                    if (PgpShieldBridge.resolvePackage(this, action) == null) {
+                        R.string.pgpshield_missing
+                    } else {
+                        R.string.unknown_error_occurred
+                    },
+                )
+            } else {
+                pgpShieldLauncher.launch(intent)
+            }
+            Unit
         }
-        // #region agent log
-        ltechnologies.onionphone.securefilemanager.helpers.DebugAgentLog.log(
-            location = "BaseAbstractActivity.kt:launchPgpShield",
-            message = "launching pgp-shield",
-            data = mapOf(
-                "action" to action,
-                "pathCount" to paths.size,
-                "hasData" to (intent.data != null),
-                "hasExtraStream" to intent.hasExtra(Intent.EXTRA_STREAM),
-            ),
-            hypothesisId = "B",
-        )
-        // #endregion
-        pgpShieldLauncher.launch(intent)
+        if (action == PgpShieldBridge.ACTION_ENCRYPT || action == PgpShieldBridge.ACTION_ENCRYPT_FOLDER) {
+            ensureCryptoAuth(launch)
+        } else {
+            launch()
+        }
     }
 
     fun launchPgpShieldIntent(intent: Intent, action: String) {
-        pendingPgpShieldAction = action
-        pgpShieldLauncher.launch(intent)
+        val launch: () -> Unit = {
+            pendingPgpShieldAction = action
+            pgpShieldLauncher.launch(intent)
+            Unit
+        }
+        if (action == PgpShieldBridge.ACTION_ENCRYPT || action == PgpShieldBridge.ACTION_ENCRYPT_FOLDER) {
+            ensureCryptoAuth(launch)
+        } else {
+            launch()
+        }
+    }
+
+    private fun ensureCryptoAuth(onAuthenticated: () -> Unit) {
+        if (!config.requireAuthForFileCrypto || !isAuthenticatorSet()) {
+            onAuthenticated()
+            return
+        }
+        if (config.isPasswordSet()) {
+            PasswordAuthenticationDialog(this, { success ->
+                if (success) onAuthenticated()
+            }) {}
+            return
+        }
+        // Biometric-only lock: reuse full auth screen
+        config.wasAppProtectionHandled = false
+        startAuthenticationActivity()
+        // User must retry encrypt after unlock — toast guidance
+        toast(R.string.require_auth_for_crypto_title)
     }
 
     fun launchPgpShieldEncrypt(paths: List<String>) {
@@ -554,9 +569,18 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
 
     fun beginExportDocument(sourcePath: String) {
         if (sourcePath.isOpenPgpFile()) {
-            toast(R.string.share_encrypted_file_confirmation)
+            ConfirmationDialog(
+                this,
+                getString(R.string.export_encrypted_file_confirmation),
+            ) {
+                launchExportDocument(sourcePath)
+            }
             return
         }
+        launchExportDocument(sourcePath)
+    }
+
+    private fun launchExportDocument(sourcePath: String) {
         pendingExportPath = sourcePath
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)

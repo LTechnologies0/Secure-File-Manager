@@ -92,7 +92,17 @@ class FreeSpaceActivity : BaseAbstractActivity() {
         )
         binding.freeSpacePlaceholder.beVisibleIf(groups.isEmpty())
         binding.freeSpaceList.beVisibleIf(groups.isNotEmpty())
-        adapter = FreeSpaceGroupAdapter(this, ArrayList(groups), binding.freeSpaceList) { }
+        adapter = FreeSpaceGroupAdapter(
+            this,
+            ArrayList(groups),
+            binding.freeSpaceList,
+            onCleanSelected = { cleanSelected() },
+        ) { group ->
+            val position = groups.indexOfFirst { it.key == (group as ReclaimGroup).key }
+            if (position >= 0) {
+                adapter?.selectItemAt(position)
+            }
+        }
         binding.freeSpaceList.adapter = adapter
     }
 

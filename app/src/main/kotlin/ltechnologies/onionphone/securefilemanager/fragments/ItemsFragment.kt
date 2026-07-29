@@ -804,7 +804,18 @@ class ItemsFragment : Fragment(), ItemOperationsListener, Breadcrumbs.Breadcrumb
                 try {
                     startActivity(market)
                 } catch (_: Exception) {
-                    activity.toast(R.string.pgpshield_missing)
+                    try {
+                        startActivity(
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse(
+                                    "https://play.google.com/store/apps/details?id=${PgpShieldBridge.PACKAGE}",
+                                ),
+                            ),
+                        )
+                    } catch (_: Exception) {
+                        activity.toast(R.string.pgpshield_missing)
+                    }
                 }
             }
         }

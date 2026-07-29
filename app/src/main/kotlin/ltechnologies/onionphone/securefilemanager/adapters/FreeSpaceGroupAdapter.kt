@@ -16,6 +16,7 @@ class FreeSpaceGroupAdapter(
     activity: BaseAbstractActivity,
     private val groups: ArrayList<ReclaimGroup>,
     recyclerView: MyRecyclerView,
+    private val onCleanSelected: () -> Unit,
     itemClick: (Any) -> Unit,
 ) : RecyclerViewAdapter(activity, recyclerView, null, itemClick) {
 
@@ -23,11 +24,15 @@ class FreeSpaceGroupAdapter(
         setupDragListener()
     }
 
-    override fun getActionMenuId() = 0
+    override fun getActionMenuId() = R.menu.menu_free_space
 
     override fun prepareActionMode(menu: Menu) {}
 
-    override fun actionItemPressed(id: Int) {}
+    override fun actionItemPressed(id: Int) {
+        when (id) {
+            R.id.clean_selected -> onCleanSelected()
+        }
+    }
 
     override fun getSelectableItemCount() = groups.size
 

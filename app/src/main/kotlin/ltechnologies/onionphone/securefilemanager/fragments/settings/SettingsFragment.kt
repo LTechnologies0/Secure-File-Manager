@@ -24,7 +24,7 @@ class SettingsFragment : SettingsAbstractFragment() {
 
         this.initCategoryFileOperations(
             screen,
-            listOf(
+            listOfNotNull(
                 this.initKeepLastModified(),
                 this.initEncryptionSettings(),
                 this.initRemoteStorage(),

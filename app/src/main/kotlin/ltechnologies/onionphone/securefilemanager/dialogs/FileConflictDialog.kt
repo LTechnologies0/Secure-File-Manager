@@ -42,7 +42,10 @@ class FileConflictDialog(
             positiveTextId = R.string.ok,
             negativeTextId = R.string.cancel,
         ) { primary, _, _ ->
-            primary.setOnClickListener { dialogConfirmed() }
+            primary.setOnClickListener {
+                dialogConfirmed()
+                dismiss()
+            }
         }
     }
 
