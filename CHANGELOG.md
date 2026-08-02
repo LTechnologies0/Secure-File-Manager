@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3
+
+* Dependency updates (AGP/Kotlin/Compose and library group bumps from Dependabot).
+* CI GitHub Actions bumps.
+
+
 ## Unreleased (LTechnologies0/Secure-File-Manager fork)
 
 * Rebrand: `applicationId` changed to `ltechnologies.onionphone.securefilemanager`, part of the [OnionPhone](https://onionphone.org) app family
