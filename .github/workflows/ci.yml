@@ -41,6 +41,9 @@ jobs:
           cache: gradle
 
       - uses: android-actions/setup-android@v4
+        with:
+          # Default still requests obsolete `tools` package; cmdline-tools suffice.
+          packages: platform-tools
 
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_SDK_ROOT}" >> local.properties
@@ -105,6 +108,9 @@ jobs:
           cache: gradle
 
       - uses: android-actions/setup-android@v4
+        with:
+          # Default still requests obsolete `tools` package; cmdline-tools suffice.
+          packages: platform-tools
 
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_SDK_ROOT}" >> local.properties
