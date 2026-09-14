@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.4
+
+* Vault crypto end-to-end: encrypt create/camera/SAF/zip/trash/remote; plaintext size checks; streaming encrypt.
+* Unlock is process-memory only; crypto auth on encrypt+decrypt; share/media/view cache cleared on lock.
+* FileProvider no longer exposes `.hidden/`; vault open/export confirm; FTPS hostname check; clearer transfer/remote errors.
+* PGP Shield: multi-decrypt chain; decrypt output never lands as plaintext in vault; URI grants revoked after use.
+
 ## 1.0.3
 
 * Dependency updates (AGP/Kotlin/Compose and library group bumps from Dependabot).

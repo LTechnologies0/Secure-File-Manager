@@ -28,8 +28,8 @@ android {
         applicationId = "ltechnologies.onionphone.securefilemanager"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 16
-        versionName = "1.0.3"
+        versionCode = 17
+        versionName = "1.0.4"
     }
 
     base {
