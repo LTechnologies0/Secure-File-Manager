@@ -12,5 +12,8 @@ interface CopyMoveListener {
         hideAction: HideAction
     )
 
-    fun copyFailed(encryptionAction: EncryptionAction = EncryptionAction.NONE)
+    fun copyFailed(
+        encryptionAction: EncryptionAction = EncryptionAction.NONE,
+        detail: String? = null,
+    )
 }

@@ -17,9 +17,11 @@ import androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode
 import ltechnologies.onionphone.securefilemanager.BuildConfig
 import ltechnologies.onionphone.securefilemanager.R
 import ltechnologies.onionphone.securefilemanager.activities.BaseAbstractActivity
+import ltechnologies.onionphone.securefilemanager.dialogs.ConfirmationDialog
 import ltechnologies.onionphone.securefilemanager.dialogs.WritePermissionDialog
 import ltechnologies.onionphone.securefilemanager.databinding.DialogTitleBinding
 import ltechnologies.onionphone.securefilemanager.helpers.*
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import ltechnologies.onionphone.securefilemanager.models.FileDirItem
 import ltechnologies.onionphone.securefilemanager.storage.RemotePath
 import ltechnologies.onionphone.securefilemanager.storage.RemoteTransfer
@@ -399,6 +401,9 @@ fun BaseAbstractActivity.renameFile(
             }
         }
     } else if (File(oldPath).renameTo(File(newPath))) {
+        if (isPathOnHidden(oldPath) || isPathOnHidden(newPath)) {
+            HiddenFileCrypto.relocateMeta(this, oldPath, newPath)
+        }
         if (File(newPath).isDirectory) {
             deleteFromMediaStore(oldPath)
             rescanPaths(arrayListOf(newPath)) {
@@ -480,15 +485,31 @@ fun Activity.sharePaths(paths: ArrayList<String>) {
     sharePathsIntent(paths, BuildConfig.APPLICATION_ID)
 }
 
+fun Activity.withHiddenExternalConfirm(path: String, action: () -> Unit) {
+    if (!isPathOnHidden(path)) {
+        action()
+        return
+    }
+    val label = path.getFilenameFromPath()
+    ConfirmationDialog(
+        this,
+        String.format(getString(R.string.open_hidden_file_confirmation), label),
+    ) {
+        action()
+    }
+}
+
 fun Activity.tryOpenPathIntent(
     path: String,
     forceChooser: Boolean,
     openAsType: Int = OPEN_AS_DEFAULT
 ) {
-    if (path.isZipFile()) {
-        this.openZip(path)
-    } else {
-        this.openPath(path, forceChooser, openAsType)
+    withHiddenExternalConfirm(path) {
+        if (path.isZipFile()) {
+            this.openZip(path)
+        } else {
+            this.openPath(path, forceChooser, openAsType)
+        }
     }
 }
 
@@ -506,7 +527,9 @@ private fun getMimeType(type: Int) = when (type) {
 }
 
 fun Activity.setAs(path: String) {
-    setAsIntent(path, BuildConfig.APPLICATION_ID)
+    withHiddenExternalConfirm(path) {
+        setAsIntent(path, BuildConfig.APPLICATION_ID)
+    }
 }
 
 fun Activity.quitApp(canLock: Boolean = true) {

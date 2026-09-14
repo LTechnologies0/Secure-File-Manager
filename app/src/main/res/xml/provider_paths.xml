@@ -4,16 +4,20 @@
     <external-path
         name="external_files"
         path="." />
-    <files-path
-        name="hidden_path"
-        path=".hidden/" />
+    <!-- Never expose vault ciphertext (.hidden/) via FileProvider — stage plaintext to share/ first. -->
     <cache-path
         name="share"
         path="share/" />
+    <cache-path
+        name="hidden_view"
+        path="hidden-view/" />
     <cache-path
         name="media"
         path="media/" />
     <cache-path
         name="remote"
         path="remote/" />
+    <cache-path
+        name="incoming"
+        path="incoming/" />
 </paths>

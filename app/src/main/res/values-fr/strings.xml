@@ -166,6 +166,7 @@
     <string name="proceed_with_deletion">Êtes-vous sûr de vouloir procéder à la suppression?</string>
     <string name="deletion_confirmation">Voulez-vous vraiment supprimer %s?</string>
     <string name="share_hidden_file_confirmation">Voulez-vous vraiment partager %s depuis le stockage occulté?</string>
+    <string name="open_hidden_file_confirmation">Ouvrir ou exporter %s depuis le stockage occulté ? Le texte en clair peut quitter le coffre.</string>
     <string name="share_encrypted_file_confirmation">Partager ce fichier OpenPGP tel quel ? Le destinataire a besoin de la clé privée correspondante pour l\'ouvrir.</string>
     <string name="export_encrypted_file_confirmation">Exporter le fichier .gpg chiffré tel quel ?</string>
     <string name="dual_pane_needs_wide_screen">Le double panneau nécessite un écran plus large (tablette / paysage).</string>

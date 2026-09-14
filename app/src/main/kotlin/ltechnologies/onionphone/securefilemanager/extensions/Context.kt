@@ -31,7 +31,9 @@ import ltechnologies.onionphone.securefilemanager.activities.AuthenticationActiv
 import ltechnologies.onionphone.securefilemanager.activities.DecompressActivity
 import ltechnologies.onionphone.securefilemanager.activities.FavoritesActivity
 import ltechnologies.onionphone.securefilemanager.helpers.*
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import ltechnologies.onionphone.securefilemanager.helpers.crypto.PrefCrypto
+import ltechnologies.onionphone.securefilemanager.openpgp.PgpShieldBridge
 import ltechnologies.onionphone.securefilemanager.services.UnlockAppService
 import ltechnologies.onionphone.securefilemanager.services.ZipManagerService
 import org.jetbrains.annotations.NotNull
@@ -98,7 +100,11 @@ fun Context.showErrorToast(msg: String, length: Int = Toast.LENGTH_LONG) {
 }
 
 fun Context.showErrorToast(exception: Exception, length: Int = Toast.LENGTH_LONG) {
-    showErrorToast(getString(R.string.unknown_error_occurred), length)
+    val detail = exception.localizedMessage
+        ?.takeIf { it.isNotBlank() }
+        ?.take(200)
+        ?: exception.javaClass.simpleName
+    showErrorToast(detail, length)
 }
 
 val Context.sdCardPath: String get() = config.sdCardPath
@@ -212,6 +218,11 @@ fun Context.getFilePublicUri(file: File, applicationId: String): Uri {
         return getStagedShareUri(file, applicationId)
     }
 
+    // Vault files must never be FileProvider'd as ciphertext.
+    if (HiddenFileCrypto.appliesTo(this, file.absolutePath)) {
+        return getStagedShareUri(file, applicationId)
+    }
+
     // for images/videos/gifs try getting a media content uri first, like content://media/external/images/media/438
     // if media content uri is null, get our custom uri like content://com.simplemobiletools.gallery.provider/external_files/emulated/0/DCIM/IMG_20171104_233915.jpg
     val mediaUri = if (file.isMediaFile()) {
@@ -237,17 +248,30 @@ private fun Context.isProviderLocalPath(file: File): Boolean {
 
 private fun Context.getStagedShareUri(file: File, applicationId: String): Uri {
     val shareDir = File(cacheDir, "share").apply { mkdirs() }
-    val dest = File(shareDir, file.name)
-    file.inputStream().use { input ->
-        dest.outputStream().use { output -> input.copyTo(output) }
+    val dest = uniqueShareStagingFile(shareDir, file)
+    if (HiddenFileCrypto.appliesTo(this, file.absolutePath) &&
+        HiddenFileCrypto.isEncrypted(this, file)
+    ) {
+        HiddenFileCrypto.openInput(this, file.absolutePath).use { input ->
+            dest.outputStream().use { output -> input.copyTo(output) }
+        }
+    } else {
+        file.inputStream().use { input ->
+            dest.outputStream().use { output -> input.copyTo(output) }
+        }
     }
     return FileProvider.getUriForFile(this, "$applicationId.provider", dest)
 }
 
 fun Context.clearShareCache() {
+    PgpShieldBridge.revokeGrantedUris(this)
+    ShareUriGrants.revokeAll(this)
     File(cacheDir, "share").deleteRecursively()
     File(cacheDir, "remote").deleteRecursively()
     File(cacheDir, "incoming").deleteRecursively()
+    File(cacheDir, "remote-up").deleteRecursively()
+    File(cacheDir, "media").deleteRecursively()
+    HiddenFileCrypto.clearViewCache(this)
 }
 
 fun Context.getMediaContentUri(path: String): Uri? {
@@ -381,12 +405,32 @@ fun Context.getTextSize() = when (config.fontSize) {
 fun Context.hasDeviceCamera(): Boolean =
     this.packageManager?.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)!!
 
-fun Context.getUriForFile(@NotNull file: File): Uri =
-    FileProvider.getUriForFile(
-        this,
-        AUTHORITY,
-        file
-    )
+fun Context.getUriForFile(@NotNull file: File): Uri {
+    if (HiddenFileCrypto.appliesTo(this, file.absolutePath) &&
+        HiddenFileCrypto.isEncrypted(this, file)
+    ) {
+        return stageVaultPlaintextUri(file)
+    }
+    return FileProvider.getUriForFile(this, AUTHORITY, file)
+}
+
+/** Decrypt vault ciphertext into share cache so PGP Shield / share see plaintext. */
+private fun Context.stageVaultPlaintextUri(file: File): Uri {
+    val shareDir = File(cacheDir, "share").apply { mkdirs() }
+    val dest = uniqueShareStagingFile(shareDir, file)
+    HiddenFileCrypto.openInput(this, file.absolutePath).use { input ->
+        dest.outputStream().use { output -> input.copyTo(output) }
+    }
+    return FileProvider.getUriForFile(this, AUTHORITY, dest)
+}
+
+private fun uniqueShareStagingFile(shareDir: File, file: File): File {
+    val digest = java.security.MessageDigest.getInstance("SHA-256")
+        .digest(file.absolutePath.toByteArray(Charsets.UTF_8))
+        .joinToString("") { "%02x".format(it) }
+        .take(16)
+    return File(shareDir, "${digest}_${file.name}")
+}
 
 fun Context.getNotificationManager(): NotificationManager =
     this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

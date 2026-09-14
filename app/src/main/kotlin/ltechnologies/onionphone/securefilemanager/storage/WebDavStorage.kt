@@ -124,15 +124,14 @@ object WebDavStorage {
     }
 
     private fun buildUrl(credentials: RemoteCredentialStore.Credentials, remotePath: String): String {
+        // Always HTTPS — never downgrade to cleartext based on non-443 ports (MITM / credential leak).
         val port = credentials.port.takeIf { it > 0 } ?: 443
-        val scheme = if (port == 443) "https" else "http"
-        val hostPort = if ((scheme == "https" && port == 443) || (scheme == "http" && port == 80)) {
-            credentials.host
-        } else {
-            "${credentials.host}:$port"
+        require(port != 80) {
+            "WebDAV cleartext HTTP (port 80) is not allowed; use HTTPS (typically port 443)"
         }
+        val hostPort = if (port == 443) credentials.host else "${credentials.host}:$port"
         val path = remotePath.trimStart('/')
-        return "$scheme://$hostPort/$path"
+        return "https://$hostPort/$path"
     }
 
     private fun normalizeDir(path: String): String =

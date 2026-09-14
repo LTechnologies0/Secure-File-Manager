@@ -17,6 +17,11 @@ open class Config(val context: Context) {
     companion object {
         @Volatile
         private var INSTANCE: Config? = null
+
+        /** Process-memory unlock flag — must not survive process death. */
+        @Volatile
+        private var unlockedThisProcess: Boolean = false
+
         fun getInstance(context: Context): Config {
             if (INSTANCE == null) {
                 INSTANCE = Config(context)
@@ -241,9 +246,12 @@ open class Config(val context: Context) {
         set(favorites) = prefs.edit().remove(FAVORITES).putStringSet(FAVORITES, favorites).apply()
 
     var wasAppProtectionHandled: Boolean
-        get() = prefs.getBoolean(WAS_APP_PROTECTION_HANDLED, false)
-        set(wasAppProtectionHandled) = prefs.edit()
-            .putBoolean(WAS_APP_PROTECTION_HANDLED, wasAppProtectionHandled).apply()
+        get() = unlockedThisProcess
+        set(wasAppProtectionHandled) {
+            unlockedThisProcess = wasAppProtectionHandled
+            // Drop legacy sticky pref so old installs cannot skip lock after kill.
+            prefs.edit().putBoolean(WAS_APP_PROTECTION_HANDLED, false).apply()
+        }
 
     var useGridView: Boolean
         get() = prefs.getBoolean(SETTINGS_USE_GRID_VIEW, false)

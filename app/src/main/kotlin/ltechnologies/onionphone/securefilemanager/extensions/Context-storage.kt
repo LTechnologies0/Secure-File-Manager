@@ -112,7 +112,16 @@ fun Context.getHiddenPath(): String = "${this.filesDir.absolutePath}/.hidden"
 
 fun Context.isPathOnSD(path: String) = sdCardPath.isNotEmpty() && path.startsWith(sdCardPath)
 
-fun Context.isPathOnHidden(path: String) = hiddenPath.isNotEmpty() && path.startsWith(hiddenPath)
+fun Context.isPathOnHidden(path: String): Boolean {
+    if (hiddenPath.isEmpty()) return false
+    return try {
+        val root = File(hiddenPath).canonicalFile
+        val target = File(path).canonicalFile
+        target == root || target.path.startsWith(root.path + File.separator)
+    } catch (_: Exception) {
+        path == hiddenPath || path.startsWith(hiddenPath.trimEnd('/') + "/")
+    }
+}
 
 // no need to use DocumentFile if an SD card is set as the default storage
 fun Context.needsStupidWritePermissions(path: String) =

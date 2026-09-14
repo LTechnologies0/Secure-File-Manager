@@ -86,6 +86,9 @@ object FtpStorage {
         credentials: RemoteCredentialStore.Credentials,
         block: (FTPClient) -> T,
     ): T {
+        require(credentials.ftps || credentials.ftpsImplicit) {
+            "Cleartext FTP is not allowed; enable FTPS (explicit or implicit)"
+        }
         val ftp = createClient(credentials)
         ftp.defaultTimeout = NETWORK_TIMEOUT_MS
         ftp.connectTimeout = NETWORK_TIMEOUT_MS
@@ -98,7 +101,7 @@ object FtpStorage {
         if (!ftp.login(credentials.username, credentials.password)) {
             error("ftp login failed")
         }
-        if (credentials.ftps && !credentials.ftpsImplicit) {
+        if (!credentials.ftpsImplicit) {
             (ftp as FTPSClient).execPBSZ(0)
             ftp.execPROT("P")
         }
@@ -113,10 +116,14 @@ object FtpStorage {
     }
 
     private fun createClient(credentials: RemoteCredentialStore.Credentials): FTPClient =
-        if (credentials.ftps) {
-            FTPSClient(credentials.ftpsImplicit)
+        if (credentials.ftps || credentials.ftpsImplicit) {
+            FTPSClient(credentials.ftpsImplicit).apply {
+                // Fail closed against MITM — commons-net defaults skip hostname checks.
+                isEndpointCheckingEnabled = true
+            }
         } else {
-            FTPClient()
+            // Unreachable when withClient require() is enforced; keep fail-closed.
+            error("Cleartext FTP is not allowed; enable FTPS")
         }
 
     private fun normalizeDir(path: String): String =

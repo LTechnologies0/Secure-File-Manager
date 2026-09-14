@@ -7,10 +7,12 @@ import android.webkit.MimeTypeMap
 import ltechnologies.onionphone.securefilemanager.activities.BaseAbstractActivity
 import ltechnologies.onionphone.securefilemanager.extensions.getUriForFile
 import ltechnologies.onionphone.securefilemanager.extensions.isOpenPgpFile
+import ltechnologies.onionphone.securefilemanager.extensions.isPathOnHidden
 import ltechnologies.onionphone.securefilemanager.extensions.config
 import ltechnologies.onionphone.securefilemanager.extensions.toast
 import ltechnologies.onionphone.securefilemanager.helpers.SessionLog
 import java.io.File
+import java.util.Collections
 
 object PgpShieldBridge {
     const val ACTION_ENCRYPT = "org.sufficientlysecure.keychain.action.ENCRYPT_DATA"
@@ -30,6 +32,31 @@ object PgpShieldBridge {
     const val EXTRA_DELETE_SOURCE = "ltechnologies.onionphone.pgpshield.extra.DELETE_SOURCE"
 
     private val PACKAGES = listOf(PACKAGE)
+
+    private data class GrantedUri(val packageName: String, val uri: Uri)
+
+    private val grantedUris = Collections.synchronizedList(mutableListOf<GrantedUri>())
+
+    fun revokeGrantedUris(context: android.content.Context) {
+        synchronized(grantedUris) {
+            grantedUris.forEach { granted ->
+                try {
+                    context.revokeUriPermission(
+                        granted.packageName,
+                        granted.uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                    )
+                } catch (_: Exception) {
+                }
+            }
+            grantedUris.clear()
+        }
+    }
+
+    private fun trackGrant(activity: BaseAbstractActivity, pkg: String, uri: Uri) {
+        activity.grantUriPermission(pkg, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        grantedUris.add(GrantedUri(pkg, uri))
+    }
 
     fun isInstalled(activity: BaseAbstractActivity): Boolean =
         resolvePackage(activity.packageManager, ACTION_ENCRYPT) != null
@@ -84,7 +111,18 @@ object PgpShieldBridge {
     }
 
     fun decrypt(activity: BaseAbstractActivity, paths: List<String>) {
-        activity.launchPgpShield(paths, ACTION_DECRYPT)
+        if (paths.isEmpty()) return
+        // DecryptFileActivity only handles the first URI — chain the rest.
+        val head = paths.first()
+        val rest = paths.drop(1)
+        if (rest.isNotEmpty()) {
+            val previous = activity.onPgpShieldResult
+            activity.onPgpShieldResult = {
+                previous?.invoke()
+                decrypt(activity, rest)
+            }
+        }
+        activity.launchPgpShield(listOf(head), ACTION_DECRYPT)
     }
 
     fun buildIntent(activity: BaseAbstractActivity, paths: List<String>, action: String): Intent? {
@@ -118,13 +156,23 @@ object PgpShieldBridge {
             putStringArrayListExtra(EXTRA_SOURCE_PATHS, ArrayList(paths))
             putExtra(EXTRA_DELETE_SOURCE, !activity.config.keepAfterEncryptionOperation)
             if (paths.size == 1) {
-                putExtra(EXTRA_OUTPUT_PATH, File(paths.first()).parent)
+                val parent = File(paths.first()).parentFile
+                val outputDir = when {
+                    parent == null -> null
+                    // Never let PGP Shield write plaintext into the vault root.
+                    activity.isPathOnHidden(parent.absolutePath) ->
+                        File(activity.cacheDir, "incoming").also { it.mkdirs() }.absolutePath
+                    else -> parent.absolutePath
+                }
+                if (outputDir != null) {
+                    putExtra(EXTRA_OUTPUT_PATH, outputDir)
+                }
             }
             if (action == ACTION_ENCRYPT) {
                 putExtra(EXTRA_ENABLE_COMPRESSION, true)
             }
             uris.forEach { uri ->
-                activity.grantUriPermission(pkg, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                trackGrant(activity, pkg, uri)
             }
         }
         return intent
@@ -205,7 +253,7 @@ object PgpShieldBridge {
             putExtra(EXTRA_DELETE_SOURCE, !activity.config.keepAfterEncryptionOperation)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             uris.forEach { uri ->
-                activity.grantUriPermission(pkg, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                trackGrant(activity, pkg, uri)
             }
         }
     }

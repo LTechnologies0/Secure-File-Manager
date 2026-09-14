@@ -1,6 +1,5 @@
 package ltechnologies.onionphone.securefilemanager.viewers
 
-import android.content.Intent
 import ltechnologies.onionphone.securefilemanager.activities.BaseAbstractActivity
 import ltechnologies.onionphone.securefilemanager.activities.ImageViewerActivity
 import ltechnologies.onionphone.securefilemanager.activities.MediaViewerActivity
@@ -12,7 +11,9 @@ import ltechnologies.onionphone.securefilemanager.extensions.isAudioFast
 import ltechnologies.onionphone.securefilemanager.extensions.isImageFast
 import ltechnologies.onionphone.securefilemanager.extensions.isOpenPgpFile
 import ltechnologies.onionphone.securefilemanager.extensions.isVideoFast
+import ltechnologies.onionphone.securefilemanager.extensions.openPath
 import ltechnologies.onionphone.securefilemanager.extensions.tryOpenPathIntent
+import ltechnologies.onionphone.securefilemanager.extensions.withHiddenExternalConfirm
 import java.io.File
 
 object ViewerRouter {
@@ -27,11 +28,19 @@ object ViewerRouter {
             activity.tryOpenPathIntent(path, forceChooser)
             return
         }
-        val viewPath = if (activity.isPathOnHidden(path)) {
-            HiddenFileCrypto.getViewablePath(activity, path)
-        } else {
-            path
+        if (activity.isPathOnHidden(path)) {
+            openHiddenInternal(activity, path, forceChooser)
+            return
         }
+        openInternalOrExternal(activity, path, path, forceChooser)
+    }
+
+    private fun openHiddenInternal(
+        activity: BaseAbstractActivity,
+        path: String,
+        forceChooser: Boolean,
+    ) {
+        val viewPath = HiddenFileCrypto.getViewablePath(activity, path)
         val file = File(viewPath)
         when {
             isTextCandidate(file) -> activity.startActivity(
@@ -43,7 +52,30 @@ object ViewerRouter {
             viewPath.isAudioFast() || viewPath.isVideoFast() -> activity.startActivity(
                 MediaViewerActivity.intent(activity, viewPath),
             )
-            else -> activity.tryOpenPathIntent(viewPath, forceChooser)
+            else -> activity.withHiddenExternalConfirm(path) {
+                activity.openPath(path, forceChooser)
+            }
+        }
+    }
+
+    private fun openInternalOrExternal(
+        activity: BaseAbstractActivity,
+        originalPath: String,
+        viewPath: String,
+        forceChooser: Boolean,
+    ) {
+        val file = File(viewPath)
+        when {
+            isTextCandidate(file) -> activity.startActivity(
+                TextViewerActivity.intent(activity, viewPath),
+            )
+            viewPath.isImageFast() -> activity.startActivity(
+                ImageViewerActivity.intent(activity, viewPath),
+            )
+            viewPath.isAudioFast() || viewPath.isVideoFast() -> activity.startActivity(
+                MediaViewerActivity.intent(activity, viewPath),
+            )
+            else -> activity.tryOpenPathIntent(originalPath, forceChooser)
         }
     }
 

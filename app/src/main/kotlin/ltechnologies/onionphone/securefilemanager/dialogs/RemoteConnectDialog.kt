@@ -147,9 +147,16 @@ class RemoteConnectDialog(
                             dismiss()
                             callback(root)
                         }
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
                         activity.runOnUiThread {
-                            activity.toast(R.string.remote_connect_failed)
+                            val detail = e.message?.takeIf { it.isNotBlank() }
+                            if (detail != null) {
+                                activity.toast(
+                                    "${activity.getString(R.string.remote_connect_failed)}: $detail",
+                                )
+                            } else {
+                                activity.toast(R.string.remote_connect_failed)
+                            }
                         }
                     }
                 }

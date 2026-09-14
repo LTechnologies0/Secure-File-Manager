@@ -13,6 +13,7 @@ import ltechnologies.onionphone.securefilemanager.activities.TrashActivity
 import ltechnologies.onionphone.securefilemanager.databinding.DialogRadioGroupBinding
 import ltechnologies.onionphone.securefilemanager.extensions.*
 import ltechnologies.onionphone.securefilemanager.helpers.HideAction
+import ltechnologies.onionphone.securefilemanager.helpers.isHide
 import ltechnologies.onionphone.securefilemanager.helpers.isUnhide
 import ltechnologies.onionphone.securefilemanager.storage.RemoteCredentialStore
 import ltechnologies.onionphone.securefilemanager.storage.RemotePath
@@ -63,6 +64,9 @@ class StoragePickerDialog(
         }
 
         for (remote in RemoteCredentialStore.listAll(activity)) {
+            if (isHide(hideAction) || isUnhide(hideAction)) {
+                break
+            }
             val root = RemotePath.root(
                 remote.protocol,
                 remote.host,
@@ -79,36 +83,38 @@ class StoragePickerDialog(
             }
         }
 
-        addOption(
-            layoutParams,
-            ID_REMOTE_NEW,
-            activity.getString(R.string.remote_connect_new),
-            false,
-        ) {
-            mDialog.dismiss()
-            RemoteServersDialog(activity) { root ->
-                callback(root)
+        if (!isHide(hideAction) && !isUnhide(hideAction)) {
+            addOption(
+                layoutParams,
+                ID_REMOTE_NEW,
+                activity.getString(R.string.remote_connect_new),
+                false,
+            ) {
+                mDialog.dismiss()
+                RemoteServersDialog(activity) { root ->
+                    callback(root)
+                }
             }
-        }
 
-        addOption(
-            layoutParams,
-            ID_TRASH,
-            activity.getString(R.string.trash_title),
-            false,
-        ) {
-            mDialog.dismiss()
-            activity.startActivity(Intent(activity, TrashActivity::class.java))
-        }
+            addOption(
+                layoutParams,
+                ID_TRASH,
+                activity.getString(R.string.trash_title),
+                false,
+            ) {
+                mDialog.dismiss()
+                activity.startActivity(Intent(activity, TrashActivity::class.java))
+            }
 
-        addOption(
-            layoutParams,
-            ID_RECENT,
-            activity.getString(R.string.recent_files_title),
-            false,
-        ) {
-            mDialog.dismiss()
-            activity.startActivity(Intent(activity, RecentActivity::class.java))
+            addOption(
+                layoutParams,
+                ID_RECENT,
+                activity.getString(R.string.recent_files_title),
+                false,
+            ) {
+                mDialog.dismiss()
+                activity.startActivity(Intent(activity, RecentActivity::class.java))
+            }
         }
 
         mDialog = activity.showM3FormDialog(

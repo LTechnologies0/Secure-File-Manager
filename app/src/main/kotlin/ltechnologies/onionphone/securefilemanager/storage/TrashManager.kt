@@ -2,6 +2,7 @@ package ltechnologies.onionphone.securefilemanager.storage
 
 import android.content.Context
 import ltechnologies.onionphone.securefilemanager.extensions.hiddenPath
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import ltechnologies.onionphone.securefilemanager.models.FileDirItem
 import java.io.File
 
@@ -31,11 +32,15 @@ object TrashManager {
         val dir = trashDir(context)
         val stamp = System.currentTimeMillis()
         val dest = uniqueTrashFile(dir, stamp, source.name)
-        val moved = source.renameTo(dest) || copyAndDelete(source, dest)
+        val oldPath = source.absolutePath
+        val moved = source.renameTo(dest) || copyAndDelete(context, source, dest)
         if (!moved) {
             return false
         }
-        File("${dest.absolutePath}$ORIGIN_SUFFIX").writeText(source.absolutePath)
+        if (source.isFile || dest.isFile) {
+            HiddenFileCrypto.relocateMeta(context, oldPath, dest.absolutePath)
+        }
+        File("${dest.absolutePath}$ORIGIN_SUFFIX").writeText(oldPath)
         return true
     }
 
@@ -121,12 +126,24 @@ object TrashManager {
         return candidate
     }
 
-    private fun copyAndDelete(source: File, dest: File): Boolean {
+    private fun copyAndDelete(context: Context, source: File, dest: File): Boolean {
         return try {
-            source.inputStream().use { input ->
-                dest.outputStream().use { output -> input.copyTo(output) }
+            if (source.isDirectory) {
+                source.copyRecursively(dest, overwrite = true)
+                source.deleteRecursively()
+            } else if (HiddenFileCrypto.appliesTo(context, source.absolutePath)) {
+                // Keep EncryptedFile bytes intact when falling back from rename.
+                source.inputStream().use { input ->
+                    dest.outputStream().use { output -> input.copyTo(output) }
+                }
+                HiddenFileCrypto.relocateMeta(context, source.absolutePath, dest.absolutePath)
+                source.delete()
+            } else {
+                source.inputStream().use { input ->
+                    dest.outputStream().use { output -> input.copyTo(output) }
+                }
+                source.delete()
             }
-            source.deleteRecursively()
             true
         } catch (_: Exception) {
             false

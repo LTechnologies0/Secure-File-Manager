@@ -6,7 +6,6 @@ import androidx.security.crypto.MasterKey
 import ltechnologies.onionphone.securefilemanager.extensions.getHiddenPath
 import ltechnologies.onionphone.securefilemanager.extensions.isPathOnHidden
 import ltechnologies.onionphone.securefilemanager.extensions.isOpenPgpFile
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -88,6 +87,23 @@ object HiddenFileCrypto {
         return cacheFile.absolutePath
     }
 
+    fun clearViewCache(context: Context) {
+        File(context.cacheDir, VIEW_CACHE_DIR).deleteRecursively()
+    }
+
+    /** Keep plaintext size/mtime metadata when a vault file is renamed. */
+    fun relocateMeta(context: Context, oldPath: String, newPath: String) {
+        if (oldPath == newPath) return
+        val oldMeta = metaFile(context, oldPath)
+        if (!oldMeta.isFile) return
+        val newMeta = metaFile(context, newPath)
+        metaRoot(context).mkdirs()
+        if (!oldMeta.renameTo(newMeta)) {
+            newMeta.writeText(oldMeta.readText())
+            oldMeta.delete()
+        }
+    }
+
     fun migratePlaintextFiles(context: Context) {
         val hiddenRoot = File(context.getHiddenPath())
         if (!hiddenRoot.isDirectory) {
@@ -166,31 +182,42 @@ object HiddenFileCrypto {
         private val plaintextSize: Long = -1L,
         private val plaintextModified: Long = -1L,
     ) : OutputStream() {
-        private val buffer = ByteArrayOutputStream()
         private val appContext = context.applicationContext
-
-        override fun write(b: Int) {
-            buffer.write(b)
-        }
-
-        override fun write(b: ByteArray, off: Int, len: Int) {
-            buffer.write(b, off, len)
-        }
-
-        override fun close() {
-            closeWith(buffer.toByteArray())
-        }
-
-        fun closeWith(data: ByteArray) {
+        private var counted = 0L
+        private val out: OutputStream = run {
             file.parentFile?.mkdirs()
             if (file.exists()) {
                 file.delete()
             }
-            encryptedFile(appContext, file).openFileOutput().use { it.write(data) }
-            val size = if (plaintextSize >= 0) plaintextSize else data.size.toLong()
+            encryptedFile(appContext, file).openFileOutput()
+        }
+
+        override fun write(b: Int) {
+            out.write(b)
+            counted++
+        }
+
+        override fun write(b: ByteArray, off: Int, len: Int) {
+            out.write(b, off, len)
+            counted += len.toLong()
+        }
+
+        override fun flush() {
+            out.flush()
+        }
+
+        override fun close() {
+            out.close()
+            val size = if (plaintextSize >= 0) plaintextSize else counted
             val modified = if (plaintextModified >= 0) plaintextModified else System.currentTimeMillis()
             writeMeta(appContext, file.absolutePath, size, modified)
             file.setLastModified(modified)
+        }
+
+        fun closeWith(data: ByteArray) {
+            out.write(data)
+            counted = data.size.toLong()
+            close()
         }
     }
 }

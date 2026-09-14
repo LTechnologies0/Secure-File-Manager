@@ -7,6 +7,7 @@ import ltechnologies.onionphone.securefilemanager.activities.BaseAbstractActivit
 import ltechnologies.onionphone.securefilemanager.databinding.DialogCreateNewBinding
 import ltechnologies.onionphone.securefilemanager.extensions.*
 import ltechnologies.onionphone.securefilemanager.helpers.ensureBackgroundThread
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import ltechnologies.onionphone.securefilemanager.storage.RemoteBrowser
 import ltechnologies.onionphone.securefilemanager.storage.RemotePath
 import java.io.File
@@ -139,7 +140,16 @@ class CreateNewItemDialog(
                     }
                 }
                 else -> {
-                    if (File(path).createNewFile()) {
+                    val created = if (
+                        activity.isPathOnHidden(path) &&
+                        !HiddenFileCrypto.isPgpPath(path)
+                    ) {
+                        HiddenFileCrypto.openOutput(activity, path).close()
+                        true
+                    } else {
+                        File(path).createNewFile()
+                    }
+                    if (created) {
                         success(alertDialog)
                     } else {
                         callback(false)

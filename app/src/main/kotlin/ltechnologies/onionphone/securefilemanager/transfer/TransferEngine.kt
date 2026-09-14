@@ -6,6 +6,7 @@ import android.provider.MediaStore
 import androidx.documentfile.provider.DocumentFile
 import ltechnologies.onionphone.securefilemanager.extensions.*
 import ltechnologies.onionphone.securefilemanager.helpers.*
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import ltechnologies.onionphone.securefilemanager.models.FileDirItem
 import java.io.File
 import java.nio.file.Files
@@ -33,6 +34,7 @@ class TransferEngine(
     ): TransferResult {
         val transferred = ArrayList<FileDirItem>()
         val failed = ArrayList<String>()
+        var lastError: String? = null
         var expectedCount = files.size
         var totalBytes = 0L
         val documents = LinkedHashMap<String, DocumentFile?>()
@@ -102,9 +104,14 @@ class TransferEngine(
                     transferred.add(file)
                 } else {
                     failed.add(file.path)
+                    if (lastError == null) {
+                        lastError = "transfer failed: ${file.name}"
+                    }
                 }
             } catch (e: Exception) {
-                onError(e.message ?: e.toString())
+                val msg = e.message?.takeIf { it.isNotBlank() } ?: e.toString()
+                onError(msg)
+                lastError = msg
                 failed.add(file.path)
             }
         }
@@ -115,6 +122,7 @@ class TransferEngine(
             expectedCount = expectedCount,
             destinationPath = destinationPath,
             failedPaths = failed,
+            lastError = lastError,
         )
     }
 
@@ -267,9 +275,19 @@ class TransferEngine(
                 }
             }
 
-            if (context.getDoesFilePathExist(destination.path) && source.size == copiedSize) {
-                applyPostCopy(source, destination, copyOnly, hideAction)
-                return true
+            if (context.getDoesFilePathExist(destination.path)) {
+                val expectedSize =
+                    if (HiddenFileCrypto.appliesTo(context, source.path) &&
+                        HiddenFileCrypto.isEncrypted(context, sourceFile)
+                    ) {
+                        HiddenFileCrypto.getPlaintextSize(context, source.path)
+                    } else {
+                        source.size
+                    }
+                if (expectedSize == copiedSize) {
+                    applyPostCopy(source, destination, copyOnly, hideAction)
+                    return true
+                }
             }
         } catch (e: Exception) {
             onError(e.message ?: e.toString())
@@ -334,9 +352,19 @@ class TransferEngine(
     }
 
     companion object {
-        fun tryFastMove(source: File, destination: File): Boolean {
+        /**
+         * Same-volume rename. Refuses vault↔non-vault so TransferEngine streams
+         * (decrypt out / encrypt in). Within vault, relocates path-keyed meta.
+         */
+        fun tryFastMove(context: Context, source: File, destination: File): Boolean {
+            val srcVault = HiddenFileCrypto.appliesTo(context, source.absolutePath)
+            val dstVault = HiddenFileCrypto.appliesTo(context, destination.absolutePath)
+            if (srcVault != dstVault) {
+                return false
+            }
+            val oldPath = source.absolutePath
             destination.parentFile?.mkdirs()
-            return try {
+            val moved = try {
                 Files.move(
                     source.toPath(),
                     destination.toPath(),
@@ -347,6 +375,10 @@ class TransferEngine(
             } catch (_: Exception) {
                 source.renameTo(destination)
             }
+            if (moved && srcVault) {
+                HiddenFileCrypto.relocateMeta(context, oldPath, destination.absolutePath)
+            }
+            return moved
         }
     }
 }

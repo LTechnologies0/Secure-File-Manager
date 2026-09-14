@@ -1,6 +1,8 @@
 package ltechnologies.onionphone.securefilemanager.storage
 
 import android.content.Context
+import ltechnologies.onionphone.securefilemanager.extensions.isPathOnHidden
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import ltechnologies.onionphone.securefilemanager.models.FileDirItem
 import java.io.File
 
@@ -37,7 +39,7 @@ object RemoteTransfer {
                         }
                     }
                 } else {
-                    RemoteBrowser.uploadLocal(context, File(file.path), destDir, destParsed)
+                    uploadLocalMaybeVault(context, File(file.path), destDir, destParsed)
                     if (!isCopyOperation && !File(file.path).delete()) {
                         error("local delete failed")
                     }
@@ -70,7 +72,15 @@ object RemoteTransfer {
                 val cached = RemoteBrowser.downloadToCache(context, file.path)
                 val source = File(cached)
                 val target = File(destFolder, source.name)
-                source.copyTo(target, overwrite = true)
+                if (context.isPathOnHidden(target.absolutePath) &&
+                    !HiddenFileCrypto.isPgpPath(target.absolutePath)
+                ) {
+                    HiddenFileCrypto.openOutput(context, target.absolutePath).use { output ->
+                        source.inputStream().use { input -> input.copyTo(output) }
+                    }
+                } else {
+                    source.copyTo(target, overwrite = true)
+                }
                 source.delete()
                 if (!isCopyOperation) {
                     RemoteBrowser.delete(context, file.path)
@@ -105,4 +115,29 @@ object RemoteTransfer {
         } catch (_: Exception) {
             false
         }
+
+    private fun uploadLocalMaybeVault(
+        context: Context,
+        local: File,
+        destDir: String,
+        destParsed: RemotePath.Parsed,
+    ) {
+        if (HiddenFileCrypto.appliesTo(context, local.absolutePath) &&
+            HiddenFileCrypto.isEncrypted(context, local)
+        ) {
+            val staged = File(context.cacheDir, "remote-up/${local.name}").also {
+                it.parentFile?.mkdirs()
+            }
+            try {
+                HiddenFileCrypto.openInput(context, local.absolutePath).use { input ->
+                    staged.outputStream().use { output -> input.copyTo(output) }
+                }
+                RemoteBrowser.uploadLocal(context, staged, destDir, destParsed)
+            } finally {
+                staged.delete()
+            }
+        } else {
+            RemoteBrowser.uploadLocal(context, local, destDir, destParsed)
+        }
+    }
 }

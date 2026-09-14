@@ -30,12 +30,8 @@ class LegacyMigrationActivity : BaseAbstractActivity() {
         binding = ActivityLegacyMigrationBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.decryptAllButton.setOnClickListener {
-            toast(R.string.legacy_migration_decrypt_unavailable)
-        }
-        binding.encryptWithOkcButton.setOnClickListener {
-            toast(R.string.legacy_migration_decrypt_unavailable)
-        }
+        binding.decryptAllButton.beGone()
+        binding.encryptWithOkcButton.beGone()
         binding.deleteRemainingButton.setOnClickListener { confirmDelete() }
         scan()
     }
@@ -73,8 +69,9 @@ class LegacyMigrationActivity : BaseAbstractActivity() {
         binding.emptyPlaceholder.beVisibleIf(aesFiles.isEmpty())
         binding.legacyAesList.beVisibleIf(aesFiles.isNotEmpty())
         binding.deleteRemainingButton.isEnabled = aesFiles.isNotEmpty()
-        binding.decryptAllButton.isEnabled = aesFiles.isNotEmpty()
-        binding.encryptWithOkcButton.isEnabled = false
+        if (aesFiles.isNotEmpty()) {
+            toast(R.string.legacy_migration_decrypt_unavailable)
+        }
         binding.legacyAesList.layoutManager = LinearLayoutManager(this)
         binding.legacyAesList.adapter = AesAdapter(aesFiles)
     }

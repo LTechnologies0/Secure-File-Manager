@@ -32,6 +32,7 @@ import ltechnologies.onionphone.securefilemanager.dialogs.StoragePickerDialog
 import ltechnologies.onionphone.securefilemanager.databinding.FragmentItemsBinding
 import ltechnologies.onionphone.securefilemanager.extensions.*
 import ltechnologies.onionphone.securefilemanager.helpers.*
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import ltechnologies.onionphone.securefilemanager.interfaces.ItemOperationsListener
 import ltechnologies.onionphone.securefilemanager.models.FileDirItem
 import ltechnologies.onionphone.securefilemanager.models.ListItem
@@ -204,7 +205,24 @@ class ItemsFragment : Fragment(), ItemOperationsListener, Breadcrumbs.Breadcrumb
 
     private fun moveCapturedMedia(cacheFile: File, destDir: String): Boolean {
         val dest = File(destDir, cacheFile.name)
-        return cacheFile.renameTo(dest) || cacheFile.copyTo(dest, overwrite = true).let { cacheFile.delete() }
+        val ctx = requireContext()
+        return try {
+            if (ctx.isPathOnHidden(dest.absolutePath) && !HiddenFileCrypto.isPgpPath(dest.absolutePath)) {
+                HiddenFileCrypto.openOutput(ctx, dest.absolutePath).use { output ->
+                    cacheFile.inputStream().use { input -> input.copyTo(output) }
+                }
+                cacheFile.delete()
+                true
+            } else {
+                cacheFile.renameTo(dest) ||
+                    cacheFile.copyTo(dest, overwrite = true).let {
+                        cacheFile.delete()
+                        true
+                    }
+            }
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun copyCapturedMedia(uri: Uri, cacheFile: File, destDir: String): Boolean {
@@ -672,7 +690,8 @@ class ItemsFragment : Fragment(), ItemOperationsListener, Breadcrumbs.Breadcrumb
             putExtra(MediaStore.EXTRA_OUTPUT, mediaURI)
             addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        requireContext().grantUriPermission(
+        ShareUriGrants.track(
+            requireContext(),
             cameraPkg,
             mediaURI,
             Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION,

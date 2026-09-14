@@ -2,6 +2,7 @@ package ltechnologies.onionphone.securefilemanager.extensions
 
 import android.content.Context
 import ltechnologies.onionphone.securefilemanager.R
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import kotlinx.coroutines.delay
 import net.lingala.zip4j.ZipFile
 import net.lingala.zip4j.model.ZipParameters
@@ -39,33 +40,81 @@ suspend fun ZipFile.insertAll(context: Context, sourcePaths: List<String>, param
         .map { sourcePath -> File(sourcePath) }
         .partition { file -> context.getIsPathDirectory(file.absolutePath) }
         .apply {
-            zipFile.addFoldersAndFiles(this, parameters)
+            zipFile.addFoldersAndFiles(context, this, parameters)
         }
 }
 
 suspend fun ZipFile.addFoldersAndFiles(
+    context: Context,
     foldersAndFilesToAdd: Pair<List<File>, List<File>>,
     parameters: ZipParameters,
 ) {
     val (folders: List<File>, files: List<File>) = foldersAndFilesToAdd
-    waitAndAddFiles(files, parameters)
-    waitAndAddFolders(folders, parameters)
+    waitAndAddFiles(context, files, parameters)
+    waitAndAddFolders(context, folders, parameters)
 }
 
-suspend fun ZipFile.waitAndAddFiles(filesToAdd: List<File>, parameters: ZipParameters) {
-    if (filesToAdd.isNotEmpty()) {
+suspend fun ZipFile.waitAndAddFiles(
+    context: Context,
+    filesToAdd: List<File>,
+    parameters: ZipParameters,
+) {
+    if (filesToAdd.isEmpty()) return
+    for (file in filesToAdd) {
         waitToReady(this) {
-            this.addFiles(filesToAdd, parameters)
+            addFileMaybeVault(context, file, parameters, file.name)
         }
     }
 }
 
-suspend fun ZipFile.waitAndAddFolders(foldersToAdd: List<File>, parameters: ZipParameters) {
+suspend fun ZipFile.waitAndAddFolders(
+    context: Context,
+    foldersToAdd: List<File>,
+    parameters: ZipParameters,
+) {
     val zipFile: ZipFile = this
     foldersToAdd.forEach { folder ->
-        waitToReady(zipFile) {
-            zipFile.addFolder(folder, parameters)
+        if (HiddenFileCrypto.appliesTo(context, folder.absolutePath)) {
+            folder.walkTopDown()
+                .filter { it.isFile && !HiddenFileCrypto.isPgpPath(it.absolutePath) }
+                .forEach { file ->
+                    val relative = file.absolutePath
+                        .removePrefix(folder.parentFile!!.absolutePath)
+                        .trimStart('/')
+                    waitToReady(zipFile) {
+                        zipFile.addFileMaybeVault(context, file, parameters, relative)
+                    }
+                }
+        } else {
+            waitToReady(zipFile) {
+                zipFile.addFolder(folder, parameters)
+            }
         }
+    }
+}
+
+private fun ZipFile.addFileMaybeVault(
+    context: Context,
+    file: File,
+    parameters: ZipParameters,
+    nameInZip: String,
+) {
+    if (HiddenFileCrypto.appliesTo(context, file.absolutePath) &&
+        HiddenFileCrypto.isEncrypted(context, file)
+    ) {
+        val params = ZipParameters(parameters).apply {
+            fileNameInZip = nameInZip
+        }
+        HiddenFileCrypto.openInput(context, file.absolutePath).use { input ->
+            addStream(input, params)
+        }
+    } else if (nameInZip != file.name) {
+        val params = ZipParameters(parameters).apply {
+            fileNameInZip = nameInZip
+        }
+        file.inputStream().use { input -> addStream(input, params) }
+    } else {
+        addFile(file, parameters)
     }
 }
 

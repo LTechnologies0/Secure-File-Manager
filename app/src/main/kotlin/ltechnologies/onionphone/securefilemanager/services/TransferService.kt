@@ -201,6 +201,8 @@ class TransferService : Service() {
             putExtra(EXTRA_DESTINATION, result.destinationPath)
             putExtra(EXTRA_COPIED_ALL, copiedAll)
             putExtra(EXTRA_SUCCESS, uiSuccess)
+            putStringArrayListExtra(EXTRA_FAILED_PATHS, ArrayList(result.failedPaths))
+            result.lastError?.let { putExtra(EXTRA_ERROR_MESSAGE, it) }
         }
         applicationContext.sendBroadcast(intent)
     }
@@ -258,6 +260,8 @@ class TransferService : Service() {
         const val EXTRA_CONFLICT_RESOLUTIONS = "EXTRA_CONFLICT_RESOLUTIONS"
         const val EXTRA_COPIED_ALL = "EXTRA_COPIED_ALL"
         const val EXTRA_SUCCESS = "EXTRA_SUCCESS"
+        const val EXTRA_FAILED_PATHS = "EXTRA_FAILED_PATHS"
+        const val EXTRA_ERROR_MESSAGE = "EXTRA_ERROR_MESSAGE"
 
         private const val TRANSFER_CHANNEL_ID = "Transfer"
         private const val PROGRESS_RECHECK_INTERVAL = 500L

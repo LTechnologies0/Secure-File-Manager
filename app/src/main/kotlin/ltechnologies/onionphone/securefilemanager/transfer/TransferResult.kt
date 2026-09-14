@@ -6,4 +6,5 @@ data class TransferResult(
     val expectedCount: Int,
     val destinationPath: String,
     val failedPaths: List<String> = emptyList(),
+    val lastError: String? = null,
 )

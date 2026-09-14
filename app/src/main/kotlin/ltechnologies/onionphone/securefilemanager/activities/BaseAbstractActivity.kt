@@ -90,6 +90,9 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
                 },
             )
         }
+        // Revoke staged vault plaintext grants before chaining next decrypt.
+        PgpShieldBridge.revokeGrantedUris(this)
+        clearShareCache()
         onPgpShieldResult?.invoke()
         onPgpShieldResult = null
     }
@@ -145,7 +148,10 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
             }
             Unit
         }
-        if (action == PgpShieldBridge.ACTION_ENCRYPT || action == PgpShieldBridge.ACTION_ENCRYPT_FOLDER) {
+        if (action == PgpShieldBridge.ACTION_ENCRYPT ||
+            action == PgpShieldBridge.ACTION_ENCRYPT_FOLDER ||
+            action == PgpShieldBridge.ACTION_DECRYPT
+        ) {
             ensureCryptoAuth(launch)
         } else {
             launch()
@@ -158,12 +164,17 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
             pgpShieldLauncher.launch(intent)
             Unit
         }
-        if (action == PgpShieldBridge.ACTION_ENCRYPT || action == PgpShieldBridge.ACTION_ENCRYPT_FOLDER) {
+        if (action == PgpShieldBridge.ACTION_ENCRYPT ||
+            action == PgpShieldBridge.ACTION_ENCRYPT_FOLDER ||
+            action == PgpShieldBridge.ACTION_DECRYPT
+        ) {
             ensureCryptoAuth(launch)
         } else {
             launch()
         }
     }
+
+    private var pendingCryptoAction: (() -> Unit)? = null
 
     private fun ensureCryptoAuth(onAuthenticated: () -> Unit) {
         if (!config.requireAuthForFileCrypto || !isAuthenticatorSet()) {
@@ -176,11 +187,17 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
             }) {}
             return
         }
-        // Biometric-only lock: reuse full auth screen
+        pendingCryptoAction = onAuthenticated
         config.wasAppProtectionHandled = false
         startAuthenticationActivity()
-        // User must retry encrypt after unlock — toast guidance
         toast(R.string.require_auth_for_crypto_title)
+    }
+
+    fun consumePendingCryptoActionAfterUnlock() {
+        if (!config.wasAppProtectionHandled) return
+        val action = pendingCryptoAction ?: return
+        pendingCryptoAction = null
+        action()
     }
 
     fun launchPgpShieldEncrypt(paths: List<String>) {
@@ -229,7 +246,11 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
                     hideAction,
                 )
             } else {
-                copyMoveListener.copyFailed(encryptionAction)
+                val errorMessage = intent.getStringExtra(TransferService.EXTRA_ERROR_MESSAGE)
+                val failedPaths =
+                    intent.getStringArrayListExtra(TransferService.EXTRA_FAILED_PATHS).orEmpty()
+                val detail = buildTransferFailureDetail(errorMessage, failedPaths)
+                copyMoveListener.copyFailed(encryptionAction, detail)
             }
             transferCompleteCallback?.invoke(intent.getBooleanExtra(TransferService.EXTRA_SUCCESS, false))
             transferCompleteCallback = null
@@ -267,16 +288,41 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
             copyMoveCallback = null
         }
 
-        override fun copyFailed(encryptionAction: EncryptionAction) {
-            toast(
+        override fun copyFailed(encryptionAction: EncryptionAction, detail: String?) {
+            val base = getString(
                 when (encryptionAction) {
                     EncryptionAction.ENCRYPT -> R.string.encryption_failed
                     EncryptionAction.DECRYPT -> R.string.decryption_failed
                     else -> R.string.copy_move_failed
                 }
             )
+            if (!detail.isNullOrBlank()) {
+                toast("$base: $detail")
+            } else {
+                toast(base)
+            }
             copyMoveCallback = null
         }
+    }
+
+    private fun buildTransferFailureDetail(
+        errorMessage: String?,
+        failedPaths: List<String>,
+    ): String? {
+        val names = failedPaths
+            .map { it.getFilenameFromPath() }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .take(3)
+        val filesPart = when {
+            names.isEmpty() -> null
+            failedPaths.size > names.size -> names.joinToString(", ") + "…"
+            else -> names.joinToString(", ")
+        }
+        return listOfNotNull(
+            errorMessage?.take(160)?.takeIf { it.isNotBlank() },
+            filesPart,
+        ).joinToString(" — ").ifBlank { null }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -320,6 +366,7 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         applyScreenshotBlockPolicy()
+        consumePendingCryptoActionAfterUnlock()
         actionOnPermission?.let {
             if (hasPermission(PERMISSION_WRITE_STORAGE)) {
                 actionOnPermission = null
@@ -421,13 +468,19 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
             return
         }
 
-        if (!getDoesFilePathExist(destination)) {
-            toast(R.string.invalid_destination)
-            return
+        if (isHide(hideAction) || isUnhide(hideAction)) {
+            if (RemotePath.isRemote(destination) || fileDirItems.any { RemotePath.isRemote(it.path) }) {
+                toast(R.string.invalid_destination)
+                return
+            }
         }
 
         if (RemotePath.isRemote(destination)) {
             ensureBackgroundThread {
+                if (!getDoesFilePathExist(destination)) {
+                    runOnUiThread { toast(R.string.invalid_destination) }
+                    return@ensureBackgroundThread
+                }
                 val (ok, fail) = RemoteTransfer.copyToRemote(
                     this,
                     fileDirItems,
@@ -438,6 +491,11 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
                     callback(destination, fail == 0 && ok > 0)
                 }
             }
+            return
+        }
+
+        if (!getDoesFilePathExist(destination)) {
+            toast(R.string.invalid_destination)
             return
         }
 
@@ -524,7 +582,11 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
                                     }
 
                                     if (!newFile.exists() &&
-                                        TransferEngine.tryFastMove(File(oldFileDirItem.path), newFile)
+                                        TransferEngine.tryFastMove(
+                                            this@BaseAbstractActivity,
+                                            File(oldFileDirItem.path),
+                                            newFile,
+                                        )
                                     ) {
                                         if (!config.keepLastModified) {
                                             newFile.setLastModified(System.currentTimeMillis())
@@ -572,6 +634,16 @@ abstract class BaseAbstractActivity : AppCompatActivity() {
             ConfirmationDialog(
                 this,
                 getString(R.string.export_encrypted_file_confirmation),
+            ) {
+                launchExportDocument(sourcePath)
+            }
+            return
+        }
+        if (isPathOnHidden(sourcePath)) {
+            val label = sourcePath.getFilenameFromPath()
+            ConfirmationDialog(
+                this,
+                String.format(getString(R.string.open_hidden_file_confirmation), label),
             ) {
                 launchExportDocument(sourcePath)
             }

@@ -315,7 +315,7 @@ class ItemsAdapter(
             return
         }
         if (dirs.size > 1 || (dirs.isNotEmpty() && files.isNotEmpty())) {
-            activity.toast(R.string.unknown_error_occurred)
+            activity.toast(R.string.pgp_select_files_or_one_folder)
             return
         }
         activity.onPgpShieldResult = { listener?.refreshItems() }
@@ -335,6 +335,7 @@ class ItemsAdapter(
         val items = getSelectedFileDirItems().filter { !it.isDirectory }
         val pgp = items.filter { it.path.isOpenPgpFile() }.map { it.path }
         if (pgp.isEmpty()) {
+            activity.toast(R.string.pgp_no_openpgp_files)
             return
         }
         activity.onPgpShieldResult = { listener?.refreshItems() }

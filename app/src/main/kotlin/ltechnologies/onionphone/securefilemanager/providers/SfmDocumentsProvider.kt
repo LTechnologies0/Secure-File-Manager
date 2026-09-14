@@ -4,11 +4,13 @@ import android.content.ComponentName
 import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
-import android.net.Uri
+import android.os.ParcelFileDescriptor
 import android.provider.DocumentsContract
 import android.provider.DocumentsProvider
 import ltechnologies.onionphone.securefilemanager.extensions.config
 import ltechnologies.onionphone.securefilemanager.extensions.hiddenPath
+import ltechnologies.onionphone.securefilemanager.extensions.isAuthenticatorSet
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -17,6 +19,10 @@ class SfmDocumentsProvider : DocumentsProvider() {
 
     override fun queryRoots(projection: Array<out String>?): Cursor {
         if (!isEnabled()) {
+            return MatrixCursor(projection ?: emptyArray())
+        }
+        val ctx = context
+        if (ctx != null && ctx.isAuthenticatorSet() && !ctx.config.wasAppProtectionHandled) {
             return MatrixCursor(projection ?: emptyArray())
         }
         val result = MatrixCursor(projection ?: arrayOf(
@@ -37,6 +43,7 @@ class SfmDocumentsProvider : DocumentsProvider() {
     }
 
     override fun queryDocument(documentId: String, projection: Array<out String>?): Cursor {
+        requireUnlocked(context ?: throw FileNotFoundException("no context"))
         return matrixForFile(resolveFile(documentId), projection)
     }
 
@@ -45,6 +52,7 @@ class SfmDocumentsProvider : DocumentsProvider() {
         projection: Array<out String>?,
         sortOrder: String?,
     ): Cursor {
+        requireUnlocked(context ?: throw FileNotFoundException("no context"))
         val dir = resolveFile(parentDocumentId)
         if (!dir.isDirectory) {
             throw FileNotFoundException("not a directory")
@@ -57,34 +65,53 @@ class SfmDocumentsProvider : DocumentsProvider() {
         return result
     }
 
-    override fun openDocument(documentId: String, mode: String, signal: android.os.CancellationSignal?): android.os.ParcelFileDescriptor {
+    override fun openDocument(
+        documentId: String,
+        mode: String,
+        signal: android.os.CancellationSignal?,
+    ): ParcelFileDescriptor {
+        val ctx = context ?: throw FileNotFoundException("no context")
+        requireUnlocked(ctx)
         val file = resolveFile(documentId)
-        if (!file.isFile) {
+        if (!file.isFile && !mode.contains("w")) {
             throw FileNotFoundException("not a file")
         }
-        val access = when (mode) {
-            "w", "wt" -> android.os.ParcelFileDescriptor.MODE_WRITE_ONLY or android.os.ParcelFileDescriptor.MODE_CREATE or android.os.ParcelFileDescriptor.MODE_TRUNCATE
-            "rw", "rwt" -> android.os.ParcelFileDescriptor.MODE_READ_WRITE or android.os.ParcelFileDescriptor.MODE_CREATE
-            else -> android.os.ParcelFileDescriptor.MODE_READ_ONLY
+        val wantsWrite = mode.contains("w")
+        val wantsRead = mode.contains("r") || mode == "r"
+        return when {
+            wantsWrite -> openEncryptedWrite(ctx, file)
+            wantsRead -> {
+                val viewable = HiddenFileCrypto.getViewablePath(ctx, file.absolutePath)
+                ParcelFileDescriptor.open(
+                    File(viewable),
+                    ParcelFileDescriptor.MODE_READ_ONLY,
+                )
+            }
+            else -> throw IllegalArgumentException("unsupported mode $mode")
         }
-        return android.os.ParcelFileDescriptor.open(file, access)
     }
 
     override fun createDocument(parentDocumentId: String, mimeType: String, displayName: String): String {
+        val ctx = context ?: throw FileNotFoundException("no context")
+        requireUnlocked(ctx)
         val parent = resolveFile(parentDocumentId)
         if (!parent.isDirectory) {
             throw FileNotFoundException("parent missing")
         }
-        val target = uniqueFile(parent, displayName)
+        val target = uniqueFile(parent, sanitizeDisplayName(displayName))
+        assertUnderHidden(target)
         if (DocumentsContract.Document.MIME_TYPE_DIR == mimeType) {
             target.mkdirs()
-        } else {
+        } else if (HiddenFileCrypto.isPgpPath(target.absolutePath)) {
             target.createNewFile()
+        } else {
+            HiddenFileCrypto.openOutput(ctx, target.absolutePath).close()
         }
         return toDocumentId(target)
     }
 
     override fun deleteDocument(documentId: String) {
+        requireUnlocked(context ?: throw FileNotFoundException("no context"))
         val file = resolveFile(documentId)
         if (file.isDirectory) {
             file.deleteRecursively()
@@ -94,12 +121,66 @@ class SfmDocumentsProvider : DocumentsProvider() {
     }
 
     override fun renameDocument(documentId: String, displayName: String): String {
+        val ctx = context ?: throw FileNotFoundException("no context")
+        requireUnlocked(ctx)
         val file = resolveFile(documentId)
-        val target = File(file.parentFile, displayName)
+        val target = File(file.parentFile, sanitizeDisplayName(displayName))
+        assertUnderHidden(target)
+        val oldPath = file.absolutePath
         if (!file.renameTo(target)) {
             throw FileNotFoundException("rename failed")
         }
+        HiddenFileCrypto.relocateMeta(ctx, oldPath, target.absolutePath)
         return toDocumentId(target)
+    }
+
+    private fun requireUnlocked(ctx: Context) {
+        if (ctx.isAuthenticatorSet() && !ctx.config.wasAppProtectionHandled) {
+            throw SecurityException("Secure File Manager is locked")
+        }
+    }
+
+    private fun sanitizeDisplayName(name: String): String {
+        val base = File(name).name
+        if (base.isEmpty() || base == "." || base == "..") {
+            throw FileNotFoundException("invalid name")
+        }
+        return base
+    }
+
+    private fun assertUnderHidden(file: File) {
+        val root = File(context!!.hiddenPath).canonicalFile
+        val target = file.canonicalFile
+        if (target != root && !target.path.startsWith(root.path + File.separator)) {
+            throw FileNotFoundException("outside root")
+        }
+    }
+
+    private fun openEncryptedWrite(ctx: Context, file: File): ParcelFileDescriptor {
+        if (HiddenFileCrypto.isPgpPath(file.absolutePath)) {
+            return ParcelFileDescriptor.open(
+                file,
+                ParcelFileDescriptor.MODE_WRITE_ONLY or
+                    ParcelFileDescriptor.MODE_CREATE or
+                    ParcelFileDescriptor.MODE_TRUNCATE,
+            )
+        }
+        val pipes = ParcelFileDescriptor.createReliablePipe()
+        Thread(
+            {
+                try {
+                    ParcelFileDescriptor.AutoCloseInputStream(pipes[0]).use { input ->
+                        HiddenFileCrypto.openOutput(ctx, file.absolutePath).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                } catch (_: Exception) {
+                    // client closed early or cancel
+                }
+            },
+            "sfm-doc-encrypt",
+        ).start()
+        return pipes[1]
     }
 
     private fun isEnabled(): Boolean = context?.config?.documentsProviderEnabled == true
@@ -114,16 +195,15 @@ class SfmDocumentsProvider : DocumentsProvider() {
         }
         val relative = documentId.removePrefix("$ROOT_ID/")
         val file = File(hidden, relative)
-        if (!file.canonicalPath.startsWith(File(hidden).canonicalPath)) {
-            throw FileNotFoundException("outside root")
-        }
-        if (!file.exists()) {
+        assertUnderHidden(file)
+        if (!file.exists() && !documentId.contains("/")) {
             throw FileNotFoundException(documentId)
         }
         return file
     }
 
-    private fun includeFile(file: File): Boolean = !file.name.startsWith(".")
+    private fun includeFile(file: File): Boolean =
+        !file.name.startsWith(".") && file.name != ".sfm-meta"
 
     private fun toDocumentId(file: File): String {
         val hidden = context!!.hiddenPath
@@ -138,6 +218,7 @@ class SfmDocumentsProvider : DocumentsProvider() {
     }
 
     private fun rowForFile(file: File): Array<Any?> {
+        val ctx = context!!
         val mime = if (file.isDirectory) {
             DocumentsContract.Document.MIME_TYPE_DIR
         } else {
@@ -145,12 +226,23 @@ class SfmDocumentsProvider : DocumentsProvider() {
                 .getMimeTypeFromExtension(file.extension.lowercase())
                 ?: "application/octet-stream"
         }
+        val size = when {
+            file.isDirectory -> 0L
+            HiddenFileCrypto.appliesTo(ctx, file.absolutePath) ->
+                HiddenFileCrypto.getPlaintextSize(ctx, file.absolutePath)
+            else -> file.length()
+        }
         return arrayOf(
             toDocumentId(file),
             file.name,
-            if (file.isDirectory) 0L else file.length(),
+            size,
             mime,
-            if (file.canWrite()) DocumentsContract.Document.FLAG_SUPPORTS_DELETE or DocumentsContract.Document.FLAG_SUPPORTS_RENAME else 0,
+            if (file.canWrite()) {
+                DocumentsContract.Document.FLAG_SUPPORTS_DELETE or
+                    DocumentsContract.Document.FLAG_SUPPORTS_RENAME
+            } else {
+                0
+            },
         )
     }
 
