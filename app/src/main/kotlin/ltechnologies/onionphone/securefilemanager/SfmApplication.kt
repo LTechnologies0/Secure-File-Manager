@@ -12,6 +12,7 @@ class SfmApplication : Application() {
         super.onCreate()
         DebugTrace.init(this)
         installCrashHandler()
+        HiddenFileCrypto.clearViewCache(this)
         ensureBackgroundThread {
             HiddenFileCrypto.migratePlaintextFiles(this)
         }

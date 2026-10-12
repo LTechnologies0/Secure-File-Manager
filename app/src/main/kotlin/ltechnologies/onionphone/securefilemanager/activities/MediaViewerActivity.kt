@@ -11,6 +11,7 @@ import ltechnologies.onionphone.securefilemanager.R
 import ltechnologies.onionphone.securefilemanager.databinding.ActivityMediaViewerBinding
 import ltechnologies.onionphone.securefilemanager.extensions.getUriForFile
 import ltechnologies.onionphone.securefilemanager.extensions.sharePaths
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import java.io.File
 
 class MediaViewerActivity : BaseAbstractActivity() {
@@ -42,6 +43,7 @@ class MediaViewerActivity : BaseAbstractActivity() {
     override fun onDestroy() {
         player?.release()
         player = null
+        HiddenFileCrypto.clearViewCache(this)
         super.onDestroy()
     }
 

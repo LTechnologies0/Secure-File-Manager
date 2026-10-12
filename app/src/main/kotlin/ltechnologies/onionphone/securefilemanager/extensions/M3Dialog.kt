@@ -60,6 +60,7 @@ fun Activity.showM3MessageDialog(
     dialog.setView(binding.root)
     dialog.setCancelable(cancelable)
     dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+    applyDialogFlagSecure(dialog)
     dialog.show()
     return dialog
 }
@@ -118,7 +119,17 @@ fun Activity.showM3FormDialog(
     dialog.setCanceledOnTouchOutside(canceledOnTouchOutside)
     onCancel?.let { dialog.setOnCancelListener { it() } }
     dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+    applyDialogFlagSecure(dialog)
     dialog.show()
     callback?.invoke(dialog, binding.dialogCardBtnPrimary, binding.dialogCardBtnSecondary, binding.dialogCardBtnNeutral)
     return dialog
+}
+
+internal fun Activity.applyDialogFlagSecure(dialog: AlertDialog) {
+    if (config.disableScreenshots) {
+        dialog.window?.setFlags(
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+        )
+    }
 }

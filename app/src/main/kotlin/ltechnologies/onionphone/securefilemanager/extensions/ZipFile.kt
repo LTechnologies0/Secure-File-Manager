@@ -105,16 +105,25 @@ private fun ZipFile.addFileMaybeVault(
         val params = ZipParameters(parameters).apply {
             fileNameInZip = nameInZip
         }
-        HiddenFileCrypto.openInput(context, file.absolutePath).use { input ->
-            addStream(input, params)
-        }
+        addStreamSync(input = HiddenFileCrypto.openInput(context, file.absolutePath), params)
     } else if (nameInZip != file.name) {
         val params = ZipParameters(parameters).apply {
             fileNameInZip = nameInZip
         }
-        file.inputStream().use { input -> addStream(input, params) }
+        addStreamSync(file.inputStream(), params)
     } else {
         addFile(file, parameters)
+    }
+}
+
+/** zip4j closes the stream when addStream returns if isRunInThread is true. */
+private fun ZipFile.addStreamSync(input: java.io.InputStream, params: ZipParameters) {
+    val threaded = isRunInThread
+    isRunInThread = false
+    try {
+        input.use { addStream(it, params) }
+    } finally {
+        isRunInThread = threaded
     }
 }
 

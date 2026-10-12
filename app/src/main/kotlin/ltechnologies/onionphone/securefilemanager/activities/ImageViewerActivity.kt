@@ -11,6 +11,7 @@ import ltechnologies.onionphone.securefilemanager.adapters.ImagePagerAdapter
 import ltechnologies.onionphone.securefilemanager.databinding.ActivityImageViewerBinding
 import ltechnologies.onionphone.securefilemanager.extensions.isImageFast
 import ltechnologies.onionphone.securefilemanager.extensions.sharePaths
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -65,6 +66,11 @@ class ImageViewerActivity : BaseAbstractActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onDestroy() {
+        HiddenFileCrypto.clearViewCache(this)
+        super.onDestroy()
     }
 
     private fun loadImagePaths(path: String): List<String> {

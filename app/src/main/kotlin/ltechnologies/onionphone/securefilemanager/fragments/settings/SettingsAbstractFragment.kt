@@ -27,6 +27,7 @@ abstract class SettingsAbstractFragment : PreferenceFragmentCompat() {
     private var preferenceUseBiometric: SwitchPreferenceCompat? = null
     private var preferenceOpenBiometricSettings: Preference? = null
     private var preferenceAppLockInfo: Preference? = null
+    private var preferenceBackgroundRelock: ListPreference? = null
 
     override fun onResume() {
         super.onResume()
@@ -429,6 +430,7 @@ abstract class SettingsAbstractFragment : PreferenceFragmentCompat() {
                 preferenceUseBiometric?.isVisible = isChecked
                 preferenceOpenBiometricSettings?.isVisible = canShowOpenBiometricSetting()
                 preferenceAppLockInfo?.isVisible = canShowAppLockInfo()
+                preferenceBackgroundRelock?.isVisible = isChecked
                 true
             }
         }
@@ -557,17 +559,44 @@ abstract class SettingsAbstractFragment : PreferenceFragmentCompat() {
             isVisible = canShowAppLockInfo()
         }
 
+    private fun initBackgroundRelock(): ListPreference =
+        ListPreference(requireContext()).apply {
+            val config = requireActivity().config
+            key = SETTINGS_BACKGROUND_RELOCK
+            title = getString(R.string.background_relock_title)
+            entries = arrayOf(
+                getString(R.string.background_relock_immediate),
+                getString(R.string.background_relock_30s),
+                getString(R.string.background_relock_1m),
+                getString(R.string.background_relock_5m),
+                getString(R.string.background_relock_10m),
+            )
+            entryValues = arrayOf("0", "30", "60", "300", "600")
+            val current = config.backgroundRelockSeconds.toString()
+            value = if (entryValues.contains(current)) current else "30"
+            summary = entries[entryValues.indexOf(value).coerceAtLeast(0)]
+            isVisible = config.isAppLock
+            setOnPreferenceChangeListener { _, newValue ->
+                val seconds = (newValue as String).toIntOrNull() ?: 30
+                config.backgroundRelockSeconds = seconds
+                summary = entries[entryValues.indexOf(newValue).coerceAtLeast(0)]
+                true
+            }
+        }
+
     protected fun initAppLockSet(): List<Preference> {
         this.preferenceAppLock = this.initAppLock()
         this.preferenceAppPassword = this.initAppPassword()
         this.preferenceUseBiometric = this.initUseBiometric()
         this.preferenceOpenBiometricSettings = initOpenBiometricSettings()
         this.preferenceAppLockInfo = this.initAppLockInfo()
+        this.preferenceBackgroundRelock = initBackgroundRelock()
         return listOf(
             preferenceAppLock!!,
             preferenceAppPassword!!,
             preferenceUseBiometric!!,
             preferenceOpenBiometricSettings!!,
+            preferenceBackgroundRelock!!,
             preferenceAppLockInfo!!,
         )
     }

@@ -172,6 +172,14 @@ class FilePickerDialog(
     private fun getTitle() = if (pickFile) R.string.select_file else R.string.select_folder
 
     private fun createNewFolder() {
+        if (RemotePath.isRemote(currPath)) {
+            CreateNewItemDialog(activity, currPath) { success ->
+                if (success) {
+                    tryUpdateItems()
+                }
+            }
+            return
+        }
         CreateNewFolderDialog(activity, currPath) {
             currPath = it
             tryUpdateItems()

@@ -8,8 +8,10 @@ import android.provider.OpenableColumns
 import ltechnologies.onionphone.securefilemanager.R
 import ltechnologies.onionphone.securefilemanager.dialogs.FilePickerDialog
 import ltechnologies.onionphone.securefilemanager.extensions.*
+import ltechnologies.onionphone.securefilemanager.helpers.AUTHORITY
 import ltechnologies.onionphone.securefilemanager.helpers.EncryptionAction
 import ltechnologies.onionphone.securefilemanager.helpers.HideAction
+import ltechnologies.onionphone.securefilemanager.helpers.ensureBackgroundThread
 import ltechnologies.onionphone.securefilemanager.models.FileDirItem
 import java.io.File
 import java.util.LinkedHashMap
@@ -65,49 +67,58 @@ class SaveAsActivity : BaseAbstractActivity() {
                 }
 
                 this.toast(R.string.saving)
-                try {
-                    val sources = intent.readStreamUris(isMultiple)
-                        ?: return@handleSAFDialog error()
-
-                    val stagingDir = File(cacheDir, "incoming").apply {
-                        deleteRecursively()
-                        mkdirs()
-                    }
-                    val files = ArrayList<FileDirItem>()
-                    for (source in sources) {
-                        val mimeType = contentResolver.getType(source) ?: "application/octet-stream"
-                        val inputStream = contentResolver.openInputStream(source) ?: continue
-                        val filename = source.safeIncomingFilename()
-                        val staged = File(stagingDir, filename)
-                        inputStream.use { input ->
-                            staged.outputStream().use { output ->
-                                input.copyToLimited(output, MAX_INCOMING_BYTES)
+                val sources = intent.readStreamUris(isMultiple)?.filter { uri ->
+                    isTrustedIncomingUri(uri, AUTHORITY, packageName)
+                }
+                if (sources.isNullOrEmpty()) {
+                    error()
+                    return@handleSAFDialog
+                }
+                ensureBackgroundThread {
+                    try {
+                        val stagingDir = File(cacheDir, "incoming").apply {
+                            deleteRecursively()
+                            mkdirs()
+                        }
+                        val files = ArrayList<FileDirItem>()
+                        for (source in sources) {
+                            val inputStream = contentResolver.openInputStream(source) ?: continue
+                            val filename = source.safeIncomingFilename()
+                            val staged = File(stagingDir, filename)
+                            inputStream.use { input ->
+                                staged.outputStream().use { output ->
+                                    input.copyToLimited(output, MAX_INCOMING_BYTES)
+                                }
                             }
+                            files.add(FileDirItem(staged.path, filename, false))
                         }
-                        files.add(FileDirItem(staged.path, filename, false))
-                    }
-                    if (files.isEmpty()) {
-                        error()
-                        return@handleSAFDialog
-                    }
-                    transferCompleteCallback = { success ->
-                        if (success) {
-                            rescanPaths(ArrayList(files.map { "$destination/${it.name}" }))
-                            toast(R.string.file_saved)
-                        } else {
-                            toast(R.string.copy_move_failed)
+                        if (files.isEmpty()) {
+                            runOnUiThread { error() }
+                            return@ensureBackgroundThread
                         }
-                        finish()
+                        runOnUiThread {
+                            transferCompleteCallback = { success ->
+                                if (success) {
+                                    rescanPaths(ArrayList(files.map { "$destination/${it.name}" }))
+                                    toast(R.string.file_saved)
+                                } else {
+                                    toast(R.string.copy_move_failed)
+                                }
+                                finish()
+                            }
+                            startTransfer(
+                                files = files,
+                                destinationPath = destination,
+                                isCopyOperation = true,
+                                conflictResolutions = LinkedHashMap(),
+                            )
+                        }
+                    } catch (e: Exception) {
+                        runOnUiThread {
+                            showErrorToast(e)
+                            finish()
+                        }
                     }
-                    startTransfer(
-                        files = files,
-                        destinationPath = destination,
-                        isCopyOperation = true,
-                        conflictResolutions = LinkedHashMap(),
-                    )
-                } catch (e: Exception) {
-                    showErrorToast(e)
-                    finish()
                 }
             }
         }
@@ -156,6 +167,17 @@ class SaveAsActivity : BaseAbstractActivity() {
     companion object {
         private const val MAX_INCOMING_BYTES = 512L * 1024 * 1024
     }
+}
+
+internal fun isTrustedIncomingUri(uri: Uri, ownAuthority: String, packageName: String): Boolean {
+    if (uri.scheme != "content") {
+        return false
+    }
+    val authority = uri.authority ?: return false
+    if (authority == ownAuthority || authority == packageName || authority.startsWith("$packageName.")) {
+        return false
+    }
+    return true
 }
 
 @Suppress("DEPRECATION")

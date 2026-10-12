@@ -80,6 +80,10 @@ android {
             excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 apply(from = rootProject.file("gradle/abi-release.gradle"))
 

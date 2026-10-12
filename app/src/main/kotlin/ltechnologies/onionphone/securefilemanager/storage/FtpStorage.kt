@@ -8,6 +8,9 @@ import org.apache.commons.net.ftp.FTPSClient
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.security.KeyStore
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 
 object FtpStorage {
     private const val REMOTE_LIST_CAP = 5_000
@@ -92,6 +95,7 @@ object FtpStorage {
         val ftp = createClient(credentials)
         ftp.defaultTimeout = NETWORK_TIMEOUT_MS
         ftp.connectTimeout = NETWORK_TIMEOUT_MS
+        ftp.setProxy(OnionVpnProxy.socks())
         val port = when {
             credentials.ftpsImplicit -> credentials.port.takeIf { it > 0 } ?: 990
             credentials.ftps -> credentials.port.takeIf { it > 0 } ?: 21
@@ -101,10 +105,7 @@ object FtpStorage {
         if (!ftp.login(credentials.username, credentials.password)) {
             error("ftp login failed")
         }
-        if (!credentials.ftpsImplicit) {
-            (ftp as FTPSClient).execPBSZ(0)
-            ftp.execPROT("P")
-        }
+        applyDataChannelProtection(ftp as FTPSClient)
         ftp.enterLocalPassiveMode()
         ftp.setFileType(FTP.BINARY_FILE_TYPE)
         return try {
@@ -118,13 +119,29 @@ object FtpStorage {
     private fun createClient(credentials: RemoteCredentialStore.Credentials): FTPClient =
         if (credentials.ftps || credentials.ftpsImplicit) {
             FTPSClient(credentials.ftpsImplicit).apply {
-                // Fail closed against MITM — commons-net defaults skip hostname checks.
+                // Default platform trust — before connect — so implicit FTPS cannot skip MITM checks.
+                trustManager = defaultX509TrustManager()
                 isEndpointCheckingEnabled = true
             }
         } else {
-            // Unreachable when withClient require() is enforced; keep fail-closed.
             error("Cleartext FTP is not allowed; enable FTPS")
         }
+
+    /** PBSZ 0 + PROT P on the data channel, including implicit FTPS (port 990). */
+    internal fun applyDataChannelProtection(ftp: FTPSClient) {
+        applyDataChannelProtection(ftp::execPBSZ, ftp::execPROT)
+    }
+
+    internal fun applyDataChannelProtection(pbsz: (Long) -> Unit, prot: (String) -> Unit) {
+        pbsz(0)
+        prot("P")
+    }
+
+    private fun defaultX509TrustManager(): X509TrustManager {
+        val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+        factory.init(null as KeyStore?)
+        return factory.trustManagers.filterIsInstance<X509TrustManager>().first()
+    }
 
     private fun normalizeDir(path: String): String =
         if (path.endsWith("/")) path else "$path/"
@@ -144,6 +161,7 @@ object FtpStorage {
             credentials.username,
             childRemote,
             isDirectory,
+            connectionId = credentials.id,
         )
         return FileDirItem(
             path = virtualPath,

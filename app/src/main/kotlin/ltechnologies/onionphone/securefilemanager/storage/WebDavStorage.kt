@@ -6,9 +6,9 @@ import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLDecoder
 import java.util.Base64
 
 object WebDavStorage {
@@ -40,7 +40,7 @@ object WebDavStorage {
         remoteFilePath: String,
     ) {
         val url = buildUrl(credentials, remoteFilePath)
-        request(credentials, url, "PUT") { conn ->
+        request(credentials, url, "PUT", contentLength = localFile.length()) { conn ->
             localFile.inputStream().use { input -> conn.outputStream.use { output -> input.copyTo(output) } }
         }
     }
@@ -79,9 +79,10 @@ object WebDavStorage {
         urlString: String,
         method: String,
         headers: Map<String, String> = emptyMap(),
+        contentLength: Long = -1L,
         body: ((HttpURLConnection) -> Unit)? = null,
     ): InputStream {
-        val conn = openConnection(credentials, urlString, method, headers)
+        val conn = openConnection(credentials, urlString, method, headers, contentLength)
         body?.invoke(conn)
         val code = conn.responseCode
         if (code !in 200..299 && code != 204) {
@@ -95,24 +96,27 @@ object WebDavStorage {
         urlString: String,
         method: String,
         headers: Map<String, String>,
+        contentLength: Long = -1L,
     ): HttpURLConnection {
-        val conn = URL(urlString).openConnection() as HttpURLConnection
+        val conn = URL(urlString).openConnection(OnionVpnProxy.socks()) as HttpURLConnection
         conn.requestMethod = method
         conn.connectTimeout = NETWORK_TIMEOUT_MS
         conn.readTimeout = NETWORK_TIMEOUT_MS
         conn.setRequestProperty("Authorization", basicAuth(credentials))
         headers.forEach { (key, value) -> conn.setRequestProperty(key, value) }
         if (method == "PROPFIND") {
+            val payload =
+                """<?xml version="1.0"?><propfind xmlns="DAV:"><prop><displayname/><getcontentlength/><resourcetype/></prop></propfind>"""
+                    .toByteArray()
             conn.setRequestProperty("Content-Type", "application/xml; charset=utf-8")
             conn.doOutput = true
-            conn.outputStream.use {
-                it.write(
-                    """<?xml version="1.0"?><propfind xmlns="DAV:"><prop><displayname/><getcontentlength/><resourcetype/></prop></propfind>"""
-                        .toByteArray(),
-                )
-            }
+            conn.setFixedLengthStreamingMode(payload.size)
+            conn.outputStream.use { it.write(payload) }
         } else if (method == "PUT") {
             conn.doOutput = true
+            if (contentLength >= 0) {
+                conn.setFixedLengthStreamingMode(contentLength)
+            }
         }
         conn.connect()
         return conn
@@ -174,7 +178,7 @@ object WebDavStorage {
         return items
     }
 
-    private fun hrefToItem(
+    internal fun hrefToItem(
         href: String,
         displayName: String,
         isCollection: Boolean,
@@ -182,11 +186,15 @@ object WebDavStorage {
         credentials: RemoteCredentialStore.Credentials,
         parentDir: String,
     ): FileDirItem? {
-        val name = displayName.ifEmpty { href.trim('/').substringAfterLast('/') }
-        if (name.isEmpty() || name == "." || name == "..") {
+        val decodedHref = decodeHref(href)
+        val hrefPath = hrefPath(decodedHref)
+        val parentNorm = parentDir.trim('/')
+        // Skip only the listed folder itself. href.endsWith("") is true for every string.
+        if (hrefPath == parentNorm) {
             return null
         }
-        if (href.endsWith(parentDir.trimStart('/')) || href.endsWith(parentDir.trimStart('/').trimEnd('/'))) {
+        val name = displayName.ifEmpty { hrefPath.substringAfterLast('/') }
+        if (name.isEmpty() || name == "." || name == "..") {
             return null
         }
         val childRemote = parentDir.trimEnd('/') + "/" + name + if (isCollection) "/" else ""
@@ -196,6 +204,7 @@ object WebDavStorage {
             credentials.username,
             childRemote,
             isCollection,
+            connectionId = credentials.id,
         )
         return FileDirItem(
             path = virtualPath,
@@ -204,5 +213,21 @@ object WebDavStorage {
             children = 0,
             size = size,
         )
+    }
+
+    internal fun decodeHref(href: String): String =
+        try {
+            URLDecoder.decode(href.replace("+", "%2B"), Charsets.UTF_8.name())
+        } catch (_: Exception) {
+            href
+        }
+
+    internal fun hrefPath(href: String): String {
+        val withoutHost = if (href.contains("://")) {
+            href.substringAfter("://").substringAfter('/', missingDelimiterValue = "")
+        } else {
+            href.trimStart('/')
+        }
+        return withoutHost.trim('/')
     }
 }

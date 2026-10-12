@@ -359,6 +359,12 @@
     <string name="set_app_password_summary_off">Password is not set</string>
     <string name="app_open_biometric_settings_summary">No screen lock is set — tap to open Android Settings</string>
     <string name="app_lock_info_summary">Device lock (fingerprint, face, or PIN) is convenient, especially in a private profile. An app password is still stronger. You can use either or both.</string>
+    <string name="background_relock_title">Relock after background</string>
+    <string name="background_relock_immediate">Immediately</string>
+    <string name="background_relock_30s">30 seconds</string>
+    <string name="background_relock_1m">1 minute</string>
+    <string name="background_relock_5m">5 minutes</string>
+    <string name="background_relock_10m">10 minutes</string>
 
     <!-- Setting sections -->
     <string name="security">Security</string>

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AlertDialog
 import ltechnologies.onionphone.securefilemanager.R
 import ltechnologies.onionphone.securefilemanager.activities.BaseAbstractActivity
 import ltechnologies.onionphone.securefilemanager.activities.MainActivity
+import ltechnologies.onionphone.securefilemanager.extensions.applyDialogFlagSecure
 import ltechnologies.onionphone.securefilemanager.extensions.toast
 import ltechnologies.onionphone.securefilemanager.storage.RemoteCredentialStore
 import ltechnologies.onionphone.securefilemanager.storage.RemotePath
@@ -26,7 +27,7 @@ class RemoteServersDialog(
         }
         val labels = servers.map { it.label() }.toMutableList()
         labels.add(activity.getString(R.string.remote_connect_new))
-        AlertDialog.Builder(activity)
+        val dialog = AlertDialog.Builder(activity)
             .setTitle(R.string.remote_saved_servers)
             .setItems(labels.toTypedArray()) { dialog, which ->
                 if (which == servers.size) {
@@ -47,12 +48,14 @@ class RemoteServersDialog(
                 showDeleteList(servers)
             }
             .setNegativeButton(R.string.cancel, null)
-            .show()
+            .create()
+        activity.applyDialogFlagSecure(dialog)
+        dialog.show()
     }
 
     private fun showDeleteList(servers: List<RemoteCredentialStore.Credentials>) {
         val labels = servers.map { it.label() }.toTypedArray()
-        AlertDialog.Builder(activity)
+        val dialog = AlertDialog.Builder(activity)
             .setTitle(R.string.remote_delete_server)
             .setItems(labels) { dialog, which ->
                 RemoteCredentialStore.delete(activity, servers[which])
@@ -61,7 +64,9 @@ class RemoteServersDialog(
                 showList()
             }
             .setNegativeButton(R.string.cancel) { _, _ -> showList() }
-            .show()
+            .create()
+        activity.applyDialogFlagSecure(dialog)
+        dialog.show()
     }
 
     private fun openRoot(root: String) {

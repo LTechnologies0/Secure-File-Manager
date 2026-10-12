@@ -23,6 +23,7 @@ import android.widget.Toast
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.app.ActivityCompat
+import com.bumptech.glide.Glide
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.security.crypto.EncryptedSharedPreferences
@@ -56,10 +57,17 @@ val Context.isBiometricPresent: Boolean
 val Context.isBiometricNotSpecified: Boolean
     get() = BiometricManager.from(this).canAuthenticate(BIOMETRIC_AUTH) == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
 
-/** Same as OnionVPN: Class-3 biometric and/or device PIN/pattern/password (works in private profiles). */
-private const val BIOMETRIC_AUTH =
-    BiometricManager.Authenticators.BIOMETRIC_STRONG or
-        BiometricManager.Authenticators.DEVICE_CREDENTIAL
+/**
+ * API 30+: BIOMETRIC_STRONG | DEVICE_CREDENTIAL.
+ * API 28-29: that combination throws — use BIOMETRIC_WEAK (covers strong + device credential via PromptInfo).
+ */
+internal val BIOMETRIC_AUTH: Int
+    get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        BiometricManager.Authenticators.BIOMETRIC_STRONG or
+            BiometricManager.Authenticators.DEVICE_CREDENTIAL
+    } else {
+        BiometricManager.Authenticators.BIOMETRIC_WEAK
+    }
 
 fun Context.toastLong(id: Int): Toast? = toast(getString(id), Toast.LENGTH_LONG)
 
@@ -271,6 +279,9 @@ fun Context.clearShareCache() {
     File(cacheDir, "incoming").deleteRecursively()
     File(cacheDir, "remote-up").deleteRecursively()
     File(cacheDir, "media").deleteRecursively()
+    File(cacheDir, "zip-in").deleteRecursively()
+    File(cacheDir, "zip-out").deleteRecursively()
+    File(cacheDir, "doc-edit").deleteRecursively()
     HiddenFileCrypto.clearViewCache(this)
 }
 
@@ -535,6 +546,10 @@ fun Context.startAuthenticationActivity() {
 
 fun Context.appLock() {
     clearShareCache()
+    Glide.get(this).clearMemory()
+    ensureBackgroundThread {
+        Glide.get(applicationContext).clearDiskCache()
+    }
     if (this.config.wasAppProtectionHandled) {
         this.stopUnlockAppService()
     }

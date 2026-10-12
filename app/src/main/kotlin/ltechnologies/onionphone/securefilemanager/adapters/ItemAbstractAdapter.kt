@@ -139,7 +139,8 @@ abstract class ItemAbstractAdapter(
     private fun getGlideOptions(listItem: FileDirItem, placeholder: Drawable) =
         RequestOptions()
             .signature(listItem.getKey())
-            .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+            .diskCacheStrategy(DiskCacheStrategy.NONE)
+            .skipMemoryCache(true)
             .error(placeholder)
             .transform(CenterCrop(), RoundedCorners(10))
 

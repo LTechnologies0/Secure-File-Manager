@@ -1,8 +1,10 @@
 package ltechnologies.onionphone.securefilemanager.openpgp
 
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.webkit.MimeTypeMap
 import ltechnologies.onionphone.securefilemanager.activities.BaseAbstractActivity
 import ltechnologies.onionphone.securefilemanager.extensions.getUriForFile
@@ -59,13 +61,17 @@ object PgpShieldBridge {
     }
 
     fun isInstalled(activity: BaseAbstractActivity): Boolean =
-        resolvePackage(activity.packageManager, ACTION_ENCRYPT) != null
+        resolvePackage(activity, ACTION_ENCRYPT) != null
 
-    fun isPackageInstalled(packageManager: PackageManager): Boolean =
-        resolvePackage(packageManager, ACTION_ENCRYPT) != null
+    fun isPackageInstalled(context: Context): Boolean =
+        resolvePackage(context.packageManager, ACTION_ENCRYPT, context.packageName) != null
 
-    fun buildManageKeysIntent(packageManager: PackageManager): Intent? =
-        packageManager.getLaunchIntentForPackage(PACKAGE)
+    fun buildManageKeysIntent(context: Context): Intent? {
+        if (!isPackageInstalled(context)) {
+            return null
+        }
+        return context.packageManager.getLaunchIntentForPackage(PACKAGE)
+    }
 
     fun encrypt(activity: BaseAbstractActivity, paths: List<String>) {
         activity.launchPgpShield(paths, ACTION_ENCRYPT)
@@ -132,7 +138,7 @@ object PgpShieldBridge {
         if (uris.isEmpty()) {
             return null
         }
-        val pkg = resolvePackage(activity.packageManager, action) ?: return null
+        val pkg = resolvePackage(activity, action) ?: return null
         val intent = if (uris.size == 1) {
             Intent(action, uris[0]).apply { type = guessMime(uris[0]) }
         } else {
@@ -237,7 +243,7 @@ object PgpShieldBridge {
         archiveName: String,
         folderLabel: String,
     ): Intent? {
-        val pkg = resolvePackage(activity.packageManager, ACTION_ENCRYPT) ?: return null
+        val pkg = resolvePackage(activity, ACTION_ENCRYPT) ?: return null
         val uris = ArrayList(files.map { activity.getUriForFile(it.second) })
         val relativePaths = ArrayList(files.map { it.first })
         return Intent(ACTION_ENCRYPT_FOLDER).apply {
@@ -285,13 +291,20 @@ object PgpShieldBridge {
     }
 
     fun resolvePackage(activity: BaseAbstractActivity, action: String): String? =
-        resolvePackage(activity.packageManager, action)
+        resolvePackage(activity.packageManager, action, activity.packageName)
 
-    private fun resolvePackage(packageManager: PackageManager, action: String): String? =
+    private fun resolvePackage(
+        packageManager: PackageManager,
+        action: String,
+        hostPackage: String,
+    ): String? =
         PACKAGES.firstOrNull { pkg ->
             try {
                 packageManager.getPackageInfo(pkg, 0)
             } catch (_: PackageManager.NameNotFoundException) {
+                return@firstOrNull false
+            }
+            if (!hasPinnedSigningCertificate(packageManager, pkg, hostPackage)) {
                 return@firstOrNull false
             }
             packageManager.resolveActivity(
@@ -307,11 +320,89 @@ object PgpShieldBridge {
             )
         }
 
+    /**
+     * Pin PGP Shield to this app's signing cert (shared LTechnologies keystore)
+     * plus any extra SHA-256 pins in [PINNED_CERT_SHA256].
+     */
+    internal fun hasPinnedSigningCertificate(
+        packageManager: PackageManager,
+        targetPackage: String,
+        hostPackage: String,
+    ): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val selfCerts = signingCertBytes(packageManager, hostPackage)
+            if (selfCerts.any { cert ->
+                    packageManager.hasSigningCertificate(
+                        targetPackage,
+                        cert,
+                        PackageManager.CERT_INPUT_RAW_X509,
+                    )
+                }
+            ) {
+                return true
+            }
+            return PINNED_CERT_SHA256.any { pin ->
+                packageManager.hasSigningCertificate(
+                    targetPackage,
+                    pin,
+                    PackageManager.CERT_INPUT_SHA256,
+                )
+            }
+        }
+        return legacySameSigner(packageManager, targetPackage, hostPackage)
+    }
+
+    private fun signingCertBytes(packageManager: PackageManager, packageName: String): List<ByteArray> {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val info = packageManager.getPackageInfo(
+                    packageName,
+                    PackageManager.GET_SIGNING_CERTIFICATES,
+                )
+                val signing = info.signingInfo ?: return emptyList()
+                val sigs = if (signing.hasMultipleSigners()) {
+                    signing.apkContentsSigners
+                } else {
+                    signing.signingCertificateHistory
+                }
+                sigs?.map { it.toByteArray() }.orEmpty()
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+                    .signatures
+                    ?.map { it.toByteArray() }
+                    .orEmpty()
+            }
+        } catch (_: PackageManager.NameNotFoundException) {
+            emptyList()
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun legacySameSigner(
+        packageManager: PackageManager,
+        targetPackage: String,
+        hostPackage: String,
+    ): Boolean {
+        val host = packageManager.getPackageInfo(hostPackage, PackageManager.GET_SIGNATURES)
+            .signatures
+            ?.map { it.toByteArray().toList() }
+            .orEmpty()
+            .toSet()
+        val target = packageManager.getPackageInfo(targetPackage, PackageManager.GET_SIGNATURES)
+            .signatures
+            ?.map { it.toByteArray().toList() }
+            .orEmpty()
+        return target.any { it in host }
+    }
+
     private fun probeIntent(action: String): Intent =
         Intent(action).apply {
             type = "*/*"
             addCategory(Intent.CATEGORY_DEFAULT)
         }
+
+    private val PINNED_CERT_SHA256: Array<ByteArray> = emptyArray()
 
     private fun guessMime(uri: Uri): String {
         val ext = MimeTypeMap.getFileExtensionFromUrl(uri.toString())

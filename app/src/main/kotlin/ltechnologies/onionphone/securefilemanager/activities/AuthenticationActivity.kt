@@ -2,6 +2,7 @@ package ltechnologies.onionphone.securefilemanager.activities
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.activity.OnBackPressedCallback
@@ -130,17 +131,20 @@ class AuthenticationActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun createPromptInfo(): BiometricPrompt.PromptInfo {
-        // Match OnionVPN: fingerprint/face OR device PIN/pattern/password (private profiles).
-        // Must not call setNegativeButtonText when DEVICE_CREDENTIAL is allowed.
-        val authenticators =
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                BiometricManager.Authenticators.DEVICE_CREDENTIAL
-        return BiometricPrompt.PromptInfo.Builder()
+        val builder = BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.prompt_info_title))
             .setSubtitle(getString(R.string.prompt_info_subtitle))
-            .setAllowedAuthenticators(authenticators)
             .setConfirmationRequired(false)
-            .build()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            builder.setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL,
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            builder.setDeviceCredentialAllowed(true)
+        }
+        return builder.build()
     }
 
     companion object {

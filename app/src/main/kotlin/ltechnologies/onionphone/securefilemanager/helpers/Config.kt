@@ -12,7 +12,8 @@ import java.util.*
 open class Config(val context: Context) {
     private val prefs = context.getSharedPrefs()
     private val defaultFontSize = context.resources.getInteger(R.integer.default_font_size)
-    private val prefsEncrypted = context.getEncryptedSharedPrefs()
+    /** Keystore-backed. Open only when the password hash is read or written. */
+    private val prefsEncrypted by lazy { context.getEncryptedSharedPrefs() }
 
     companion object {
         @Volatile
@@ -115,6 +116,12 @@ open class Config(val context: Context) {
     var isAppLock: Boolean
         get() = prefs.getBoolean(SETTINGS_APP_LOCK, false)
         set(appLock) = prefs.edit().putBoolean(SETTINGS_APP_LOCK, appLock).apply()
+
+    /** Seconds in background before relock. 0 = immediately. */
+    var backgroundRelockSeconds: Int
+        get() = prefs.getInt(SETTINGS_BACKGROUND_RELOCK, 30)
+        set(backgroundRelockSeconds) = prefs.edit()
+            .putInt(SETTINGS_BACKGROUND_RELOCK, backgroundRelockSeconds).apply()
 
     var useBiometricAuthentication: Boolean
         get() = prefs.getBoolean(SETTINGS_USE_BIOMETRIC_AUTHENTICATION, false)

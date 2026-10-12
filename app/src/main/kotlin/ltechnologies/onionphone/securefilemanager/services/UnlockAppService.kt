@@ -56,6 +56,11 @@ class UnlockAppService : Service() {
         return super.onStartCommand(intent, flags, startId)
     }
 
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        appLock()
+        stopSelf()
+    }
+
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }

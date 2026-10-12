@@ -4,6 +4,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
+import android.os.Handler
+import android.os.HandlerThread
 import android.os.ParcelFileDescriptor
 import android.provider.DocumentsContract
 import android.provider.DocumentsProvider
@@ -61,7 +63,7 @@ class SfmDocumentsProvider : DocumentsProvider() {
         dir.listFiles()
             ?.filter { includeFile(it) }
             ?.sortedWith(compareBy({ !it.isDirectory }, { it.name.lowercase() }))
-            ?.forEach { result.addRow(rowForFile(it)) }
+            ?.forEach { addFileRow(result, it) }
         return result
     }
 
@@ -76,17 +78,10 @@ class SfmDocumentsProvider : DocumentsProvider() {
         if (!file.isFile && !mode.contains("w")) {
             throw FileNotFoundException("not a file")
         }
-        val wantsWrite = mode.contains("w")
-        val wantsRead = mode.contains("r") || mode == "r"
-        return when {
-            wantsWrite -> openEncryptedWrite(ctx, file)
-            wantsRead -> {
-                val viewable = HiddenFileCrypto.getViewablePath(ctx, file.absolutePath)
-                ParcelFileDescriptor.open(
-                    File(viewable),
-                    ParcelFileDescriptor.MODE_READ_ONLY,
-                )
-            }
+        return when (mode) {
+            "r" -> openRead(ctx, file)
+            "w", "wt" -> openEncryptedWrite(ctx, file)
+            "rw", "wa" -> openReadWrite(ctx, file, mode)
             else -> throw IllegalArgumentException("unsupported mode $mode")
         }
     }
@@ -156,6 +151,45 @@ class SfmDocumentsProvider : DocumentsProvider() {
         }
     }
 
+    private fun openRead(ctx: Context, file: File): ParcelFileDescriptor {
+        val viewable = HiddenFileCrypto.getViewablePath(ctx, file.absolutePath)
+        return ParcelFileDescriptor.open(File(viewable), ParcelFileDescriptor.MODE_READ_ONLY)
+    }
+
+    private fun openReadWrite(ctx: Context, file: File, mode: String): ParcelFileDescriptor {
+        if (HiddenFileCrypto.isPgpPath(file.absolutePath)) {
+            val flags = ParcelFileDescriptor.MODE_READ_WRITE or
+                ParcelFileDescriptor.MODE_CREATE or
+                if (mode == "wa") ParcelFileDescriptor.MODE_APPEND else 0
+            return ParcelFileDescriptor.open(file, flags)
+        }
+        val tempDir = File(ctx.cacheDir, "doc-edit").apply { mkdirs() }
+        val temp = File(tempDir, file.name)
+        if (file.isFile && HiddenFileCrypto.isEncrypted(ctx, file)) {
+            HiddenFileCrypto.openInput(ctx, file.absolutePath).use { input ->
+                temp.outputStream().use { output -> input.copyTo(output) }
+            }
+        } else if (!temp.exists()) {
+            temp.createNewFile()
+        }
+        val flags = ParcelFileDescriptor.MODE_READ_WRITE or
+            ParcelFileDescriptor.MODE_CREATE or
+            if (mode == "wa") ParcelFileDescriptor.MODE_APPEND else 0
+        val thread = HandlerThread("sfm-doc-close").apply { start() }
+        return ParcelFileDescriptor.open(temp, flags, Handler(thread.looper)) { error ->
+            try {
+                if (error == null) {
+                    HiddenFileCrypto.openOutput(ctx, file.absolutePath).use { output ->
+                        temp.inputStream().use { input -> input.copyTo(output) }
+                    }
+                }
+            } finally {
+                temp.delete()
+                thread.quitSafely()
+            }
+        }
+    }
+
     private fun openEncryptedWrite(ctx: Context, file: File): ParcelFileDescriptor {
         if (HiddenFileCrypto.isPgpPath(file.absolutePath)) {
             return ParcelFileDescriptor.open(
@@ -213,11 +247,11 @@ class SfmDocumentsProvider : DocumentsProvider() {
 
     private fun matrixForFile(file: File, projection: Array<out String>?): Cursor {
         val result = MatrixCursor(projection ?: defaultProjection())
-        result.addRow(rowForFile(file))
+        addFileRow(result, file)
         return result
     }
 
-    private fun rowForFile(file: File): Array<Any?> {
+    private fun addFileRow(cursor: MatrixCursor, file: File) {
         val ctx = context!!
         val mime = if (file.isDirectory) {
             DocumentsContract.Document.MIME_TYPE_DIR
@@ -232,18 +266,23 @@ class SfmDocumentsProvider : DocumentsProvider() {
                 HiddenFileCrypto.getPlaintextSize(ctx, file.absolutePath)
             else -> file.length()
         }
-        return arrayOf(
-            toDocumentId(file),
-            file.name,
-            size,
-            mime,
-            if (file.canWrite()) {
-                DocumentsContract.Document.FLAG_SUPPORTS_DELETE or
-                    DocumentsContract.Document.FLAG_SUPPORTS_RENAME
-            } else {
-                0
-            },
-        )
+        val flags = if (file.canWrite()) {
+            DocumentsContract.Document.FLAG_SUPPORTS_DELETE or
+                DocumentsContract.Document.FLAG_SUPPORTS_RENAME
+        } else {
+            0
+        }
+        val row = cursor.newRow()
+        for (column in cursor.columnNames) {
+            when (column) {
+                DocumentsContract.Document.COLUMN_DOCUMENT_ID -> row.add(toDocumentId(file))
+                DocumentsContract.Document.COLUMN_DISPLAY_NAME -> row.add(file.name)
+                DocumentsContract.Document.COLUMN_SIZE -> row.add(size)
+                DocumentsContract.Document.COLUMN_MIME_TYPE -> row.add(mime)
+                DocumentsContract.Document.COLUMN_FLAGS -> row.add(flags)
+                else -> row.add(null)
+            }
+        }
     }
 
     private fun defaultProjection() = arrayOf(

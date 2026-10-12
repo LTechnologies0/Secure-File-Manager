@@ -7,7 +7,7 @@ import ltechnologies.onionphone.securefilemanager.models.FileDirItem
 import java.io.File
 
 object TrashManager {
-    const val TRASH_DIR = ".sfm_trash"
+    const val TRASH_DIR = HiddenFileCrypto.TRASH_DIR_NAME
     private const val ORIGIN_SUFFIX = ".origin"
     private const val TTL_MS = 30L * 24 * 60 * 60 * 1000
 
@@ -33,14 +33,12 @@ object TrashManager {
         val stamp = System.currentTimeMillis()
         val dest = uniqueTrashFile(dir, stamp, source.name)
         val oldPath = source.absolutePath
-        val moved = source.renameTo(dest) || copyAndDelete(context, source, dest)
+        val moved = copyVaultAware(context, source, dest) && deleteSource(source)
         if (!moved) {
+            dest.deleteRecursively()
             return false
         }
-        if (source.isFile || dest.isFile) {
-            HiddenFileCrypto.relocateMeta(context, oldPath, dest.absolutePath)
-        }
-        File("${dest.absolutePath}$ORIGIN_SUFFIX").writeText(oldPath)
+        writeSidecar(dest, oldPath, stamp)
         return true
     }
 
@@ -50,7 +48,8 @@ object TrashManager {
             if (entry.name.endsWith(ORIGIN_SUFFIX)) {
                 return@forEach
             }
-            if (entry.lastModified() < cutoff) {
+            val deletedAt = readSidecar(entry)?.deletedAt ?: entry.lastModified()
+            if (deletedAt < cutoff) {
                 deleteTrashedEntry(entry)
             }
         }
@@ -61,13 +60,12 @@ object TrashManager {
         return dir.listFiles()
             ?.filter { !it.name.endsWith(ORIGIN_SUFFIX) }
             ?.mapNotNull { entry ->
-                val originFile = File("${entry.absolutePath}$ORIGIN_SUFFIX")
-                val originalPath = originFile.takeIf { it.exists() }?.readText()?.trim().orEmpty()
+                val sidecar = readSidecar(entry)
                 TrashedItem(
                     trashPath = entry.absolutePath,
-                    originalPath = originalPath,
+                    originalPath = sidecar?.originalPath.orEmpty(),
                     name = entry.name,
-                    deletedAt = entry.lastModified(),
+                    deletedAt = sidecar?.deletedAt ?: entry.lastModified(),
                     isDirectory = entry.isDirectory,
                 )
             }
@@ -88,22 +86,17 @@ object TrashManager {
         if (target.exists()) {
             return false
         }
-        val ok = trashFile.renameTo(target)
+        val ok = copyVaultAware(context, trashFile, target)
         if (ok) {
-            File("${trashFile.absolutePath}$ORIGIN_SUFFIX").delete()
+            deleteTrashedEntry(trashFile)
         }
         return ok
     }
 
     fun deletePermanently(item: TrashedItem): Boolean {
         val trashFile = File(item.trashPath)
-        val ok = if (trashFile.isDirectory) {
-            trashFile.deleteRecursively()
-        } else {
-            trashFile.delete()
-        }
-        File("${trashFile.absolutePath}$ORIGIN_SUFFIX").delete()
-        return ok
+        deleteTrashedEntry(trashFile)
+        return !trashFile.exists()
     }
 
     fun toFileDirItem(item: TrashedItem): FileDirItem =
@@ -126,29 +119,73 @@ object TrashManager {
         return candidate
     }
 
-    private fun copyAndDelete(context: Context, source: File, dest: File): Boolean {
+    internal data class Sidecar(val originalPath: String, val deletedAt: Long)
+
+    private fun writeSidecar(dest: File, originalPath: String, deletedAt: Long) {
+        File("${dest.absolutePath}$ORIGIN_SUFFIX").writeText(
+            "path=$originalPath\ndeletedAt=$deletedAt\n",
+        )
+    }
+
+    private fun readSidecar(entry: File): Sidecar? {
+        val originFile = File("${entry.absolutePath}$ORIGIN_SUFFIX")
+        if (!originFile.isFile) {
+            return null
+        }
+        return parseSidecarText(originFile.readText(), entry.lastModified())
+    }
+
+    internal fun parseSidecarText(text: String, fallbackDeletedAt: Long): Sidecar {
+        val map = text.lines().mapNotNull { line ->
+            val parts = line.split('=', limit = 2)
+            if (parts.size == 2) parts[0] to parts[1] else null
+        }.toMap()
+        val path = map["path"] ?: text.trim().takeIf { !it.contains('=') }.orEmpty()
+        val deletedAt = map["deletedAt"]?.toLongOrNull() ?: fallbackDeletedAt
+        return Sidecar(path, deletedAt)
+    }
+
+    /**
+     * Copy with decrypt/re-encrypt so EncryptedFile AAD matches the destination name.
+     * Restore always uses this (never rename) so vault files stay readable.
+     */
+    private fun copyVaultAware(context: Context, source: File, dest: File): Boolean {
         return try {
             if (source.isDirectory) {
-                source.copyRecursively(dest, overwrite = true)
-                source.deleteRecursively()
-            } else if (HiddenFileCrypto.appliesTo(context, source.absolutePath)) {
-                // Keep EncryptedFile bytes intact when falling back from rename.
-                source.inputStream().use { input ->
-                    dest.outputStream().use { output -> input.copyTo(output) }
+                dest.mkdirs()
+                source.listFiles()?.forEach { child ->
+                    if (child.name.endsWith(ORIGIN_SUFFIX)) {
+                        return@forEach
+                    }
+                    if (!copyVaultAware(context, child, File(dest, child.name))) {
+                        return false
+                    }
                 }
-                HiddenFileCrypto.relocateMeta(context, source.absolutePath, dest.absolutePath)
-                source.delete()
+                true
+            } else if (HiddenFileCrypto.appliesTo(context, source.absolutePath) &&
+                HiddenFileCrypto.isEncrypted(context, source)
+            ) {
+                dest.parentFile?.mkdirs()
+                HiddenFileCrypto.openInput(context, source.absolutePath).use { input ->
+                    HiddenFileCrypto.openOutput(context, dest.absolutePath).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                true
             } else {
+                dest.parentFile?.mkdirs()
                 source.inputStream().use { input ->
                     dest.outputStream().use { output -> input.copyTo(output) }
                 }
-                source.delete()
+                true
             }
-            true
         } catch (_: Exception) {
             false
         }
     }
+
+    private fun deleteSource(source: File): Boolean =
+        if (source.isDirectory) source.deleteRecursively() else source.delete()
 
     private fun deleteTrashedEntry(entry: File) {
         if (entry.isDirectory) {

@@ -136,12 +136,12 @@ class RemoteConnectDialog(
                 }
                 ensureBackgroundThread {
                     try {
-                        RemoteCredentialStore.save(activity, credentials)
                         when (protocol) {
                             RemotePath.SFTP_SCHEME -> SftpStorage.list(activity, credentials, "/", hostKeyPrompt)
                             RemotePath.FTP_SCHEME -> FtpStorage.list(credentials, "/")
                             RemotePath.WEBDAV_SCHEME -> WebDavStorage.list(credentials, "/")
                         }
+                        RemoteCredentialStore.save(activity, credentials)
                         val root = RemotePath.root(protocol, host, user, connectionId = credentials.id)
                         activity.runOnUiThread {
                             dismiss()

@@ -14,8 +14,10 @@ import ltechnologies.onionphone.securefilemanager.extensions.getFilenameFromPath
 import ltechnologies.onionphone.securefilemanager.extensions.getParentPath
 import ltechnologies.onionphone.securefilemanager.extensions.showErrorToast
 import ltechnologies.onionphone.securefilemanager.extensions.toast
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import ltechnologies.onionphone.securefilemanager.helpers.ensureBackgroundThread
 import ltechnologies.onionphone.securefilemanager.models.ListItem
+import java.io.File
 import net.lingala.zip4j.ZipFile
 import net.lingala.zip4j.exception.ZipException
 
@@ -151,7 +153,7 @@ class DecompressActivity : BaseAbstractActivity() {
                     } else {
                         ZipFile(zipPath, pass)
                     }
-                    zip.extractFile(entryName, destination)
+                    extractEntryMaybeVault(zip, entryName, destination)
                     runOnUiThread {
                         toast(R.string.decompression_successful)
                     }
@@ -166,6 +168,39 @@ class DecompressActivity : BaseAbstractActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun extractEntryMaybeVault(zip: ZipFile, entryName: String, destination: String) {
+        if (!HiddenFileCrypto.appliesTo(this, destination)) {
+            zip.extractFile(entryName, destination)
+            return
+        }
+        val staging = File(cacheDir, "zip-out").apply {
+            deleteRecursively()
+            mkdirs()
+        }
+        try {
+            zip.extractFile(entryName, staging.absolutePath)
+            val extracted = File(staging, entryName)
+            val dest = File(destination, File(entryName).name)
+            dest.parentFile?.mkdirs()
+            if (extracted.isDirectory) {
+                extracted.walkTopDown().filter { it.isFile }.forEach { file ->
+                    val rel = file.absolutePath.removePrefix(extracted.absolutePath).trimStart('/')
+                    val target = File(dest, rel)
+                    target.parentFile?.mkdirs()
+                    HiddenFileCrypto.openOutput(this, target.absolutePath).use { output ->
+                        file.inputStream().use { input -> input.copyTo(output) }
+                    }
+                }
+            } else if (extracted.isFile) {
+                HiddenFileCrypto.openOutput(this, dest.absolutePath).use { output ->
+                    extracted.inputStream().use { input -> input.copyTo(output) }
+                }
+            }
+        } finally {
+            staging.deleteRecursively()
         }
     }
 

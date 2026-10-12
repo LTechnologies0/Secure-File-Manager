@@ -40,7 +40,7 @@ class SettingsEncryptionFragment : SettingsAbstractFragment() {
     }
 
     private fun refreshOpenKeychainStatus() {
-        val installed = PgpShieldBridge.isPackageInstalled(requireContext().packageManager)
+        val installed = PgpShieldBridge.isPackageInstalled(requireContext())
         preferenceOpenKeychainStatus?.summary = getString(
             if (installed) R.string.openkeychain_status_installed
             else R.string.openkeychain_status_not_installed,
@@ -66,7 +66,7 @@ class SettingsEncryptionFragment : SettingsAbstractFragment() {
             icon = activity.getDrawableById(R.drawable.ic_lock_vector)
             preferenceOpenKeychainManageKeys = this
             setOnPreferenceClickListener {
-                val intent = PgpShieldBridge.buildManageKeysIntent(requireContext().packageManager)
+                val intent = PgpShieldBridge.buildManageKeysIntent(requireContext())
                 if (intent == null) {
                     activity.toast(R.string.pgpshield_missing)
                 } else {

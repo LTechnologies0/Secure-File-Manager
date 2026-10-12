@@ -5,11 +5,14 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import ltechnologies.onionphone.securefilemanager.R
 import ltechnologies.onionphone.securefilemanager.extensions.*
 import ltechnologies.onionphone.securefilemanager.helpers.APP_CHANNEL_ID
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import ltechnologies.onionphone.securefilemanager.helpers.ZipManagerEvents
 import ltechnologies.onionphone.securefilemanager.helpers.getNotificationId
 import kotlinx.coroutines.CoroutineScope
@@ -41,7 +44,15 @@ class ZipManagerService : Service() {
         this.mNotificationManager.createNotificationChannel(this.getNotificationChannel())
         this.mNotification = this.getNotificationBuilder()
 
-        this.startForeground(this.mNotificationId, this.mNotification.build())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                mNotificationId,
+                mNotification.build(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+            )
+        } else {
+            startForeground(mNotificationId, mNotification.build())
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -114,10 +125,11 @@ class ZipManagerService : Service() {
 
     private fun decompress(path: String, destination: String?, password: CharArray?) {
         try {
-            createZipFile(path, password).also { zipFile: ZipFile ->
+            val zipSource = stageZipSource(path)
+            createZipFile(zipSource, password).also { zipFile: ZipFile ->
                 this.toast(R.string.decompressing)
-                val destinationPath = destination ?: zipFile.file.absolutePath.getParentPath()
-                zipFile.extractAll(destinationPath)
+                val destinationPath = destination ?: File(path).absolutePath.getParentPath()
+                extractMaybeVault(zipFile, destinationPath)
                 this.handleNotification(ACTION_DECOMPRESSION)
             }
         } catch (e: Exception) {
@@ -138,6 +150,45 @@ class ZipManagerService : Service() {
             mNotificationManager.notify(mNotificationId, build())
         }
         this.mProgressMonitor.isCancelAllTasks = true
+    }
+
+    private fun stageZipSource(path: String): String {
+        if (!HiddenFileCrypto.appliesTo(this, path) || !HiddenFileCrypto.isEncrypted(this, File(path))) {
+            return path
+        }
+        val staged = File(cacheDir, "zip-in/${File(path).name}").also { it.parentFile?.mkdirs() }
+        HiddenFileCrypto.openInput(this, path).use { input ->
+            staged.outputStream().use { output -> input.copyTo(output) }
+        }
+        return staged.absolutePath
+    }
+
+    private fun extractMaybeVault(zipFile: ZipFile, destinationPath: String) {
+        if (!HiddenFileCrypto.appliesTo(this, destinationPath)) {
+            zipFile.extractAll(destinationPath)
+            return
+        }
+        val staging = File(cacheDir, "zip-out").apply {
+            deleteRecursively()
+            mkdirs()
+        }
+        try {
+            zipFile.extractAll(staging.absolutePath)
+            staging.walkTopDown().filter { it.isFile }.forEach { extracted ->
+                val relative = extracted.absolutePath.removePrefix(staging.absolutePath).trimStart('/')
+                val dest = File(destinationPath, relative)
+                dest.parentFile?.mkdirs()
+                if (HiddenFileCrypto.isPgpPath(dest.absolutePath)) {
+                    extracted.copyTo(dest, overwrite = true)
+                } else {
+                    HiddenFileCrypto.openOutput(this, dest.absolutePath).use { output ->
+                        extracted.inputStream().use { input -> input.copyTo(output) }
+                    }
+                }
+            }
+        } finally {
+            staging.deleteRecursively()
+        }
     }
 
     private fun createZipFile(path: String, password: CharArray?): ZipFile {

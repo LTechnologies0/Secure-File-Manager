@@ -244,6 +244,7 @@
             android:directBootAware="false"
             android:enabled="true"
             android:exported="false"
+            android:foregroundServiceType="dataSync"
             android:icon="@drawable/ic_launcher_foreground"
             android:label="ZipManagerService">
 

@@ -63,7 +63,11 @@ class TransferEngine(
             try {
                 var newFileDirItem = destinationChild(file, destinationPath)
 
-                if (context.getDoesFilePathExist(newFileDirItem.path)) {
+                val destinationExists = context.getDoesFilePathExist(newFileDirItem.path)
+                val mergingDirectory = destinationExists &&
+                    file.isDirectory &&
+                    File(newFileDirItem.path).isDirectory
+                if (destinationExists && !mergingDirectory) {
                     when (getConflictResolution(conflictResolutions, newFileDirItem.path)) {
                         CONFLICT_SKIP -> {
                             expectedCount--
@@ -180,7 +184,7 @@ class TransferEngine(
         bumpProgress: (Long, String) -> Unit,
         isCancelled: () -> Boolean,
     ): Boolean {
-        if (!context.createDirectorySync(destinationPath)) {
+        if (!context.createDirectorySync(destinationPath) || !File(destinationPath).isDirectory) {
             onError(
                 String.format(
                     context.getString(ltechnologies.onionphone.securefilemanager.R.string.could_not_create_folder),
@@ -195,33 +199,62 @@ class TransferEngine(
             return false
         }
 
+        val copiedChildren = ArrayList<FileDirItem>()
+        var allOk = true
         Files.newDirectoryStream(sourceDir.toPath()).use { stream ->
             for (childPath in stream) {
                 if (isCancelled()) {
-                    return false
+                    allOk = false
+                    break
                 }
                 val childName = childPath.fileName.toString()
                 val newPath = "$destinationPath/$childName"
                 if (context.getDoesFilePathExist(newPath)) {
+                    val existing = File(newPath)
+                    val sourceIsDir = childPath.toFile().isDirectory
+                    if (existing.isDirectory != sourceIsDir) {
+                        allOk = false
+                        onError(
+                            String.format(
+                                context.getString(
+                                    ltechnologies.onionphone.securefilemanager.R.string.could_not_create_folder,
+                                ),
+                                newPath,
+                            ),
+                        )
+                    }
                     continue
                 }
                 val oldFile = childPath.toFile()
                 val oldFileDirItem = oldFile.toFileDirItem(context)
                 val newFileDirItem =
                     FileDirItem(newPath, newPath.getFilenameFromPath(), oldFile.isDirectory)
-                copyEntry(
+                val childOk = copyEntry(
                     oldFileDirItem,
                     newFileDirItem,
-                    copyOnly,
+                    copyOnly = true,
                     copyMediaOnly,
                     hideAction,
                     documents,
                     bumpProgress,
                     isCancelled,
                 )
+                if (childOk) {
+                    copiedChildren.add(oldFileDirItem)
+                } else {
+                    allOk = false
+                }
             }
         }
-        return true
+        if (!copyOnly && allOk && !isCancelled()) {
+            for (child in copiedChildren) {
+                context.deleteFileBgSync(child, allowDeleteFolder = true)
+                context.deleteFromMediaStore(child.path)
+            }
+            context.deleteFileBgSync(source, allowDeleteFolder = true)
+            context.deleteFromMediaStore(source.path)
+        }
+        return allOk && !isCancelled()
     }
 
     private fun copyFile(
@@ -288,8 +321,10 @@ class TransferEngine(
                     applyPostCopy(source, destination, copyOnly, hideAction)
                     return true
                 }
+                destFile.delete()
             }
         } catch (e: Exception) {
+            destFile.delete()
             onError(e.message ?: e.toString())
         }
         return false

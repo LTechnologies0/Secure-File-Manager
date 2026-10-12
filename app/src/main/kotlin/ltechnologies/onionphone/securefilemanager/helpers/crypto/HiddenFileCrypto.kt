@@ -18,6 +18,8 @@ object HiddenFileCrypto {
     private const val FILE_KEY_ALIAS = "__sfm_hidden_files__"
     private const val META_DIR = ".sfm-meta"
     private const val VIEW_CACHE_DIR = "hidden-view"
+    private const val MIGRATE_DIR = ".sfm-migrating"
+    const val TRASH_DIR_NAME = ".sfm_trash"
 
     /** PGP ciphertext must never pass through this layer — OpenPGP stays in PGP Shield. */
     fun isPgpPath(path: String): Boolean = path.isOpenPgpFile()
@@ -110,9 +112,12 @@ object HiddenFileCrypto {
             return
         }
         val metaRoot = metaRoot(context)
+        val trashRoot = File(hiddenRoot, TRASH_DIR_NAME)
         metaRoot.mkdirs()
         hiddenRoot.walkTopDown()
             .filter { it.isFile && !it.absolutePath.startsWith(metaRoot.absolutePath) }
+            .filter { !it.absolutePath.startsWith(trashRoot.absolutePath) }
+            .filter { it.parentFile?.name != MIGRATE_DIR }
             .filter { !isPgpPath(it.absolutePath) }
             .forEach { file ->
                 if (!isEncrypted(context, file)) {
@@ -121,11 +126,36 @@ object HiddenFileCrypto {
             }
     }
 
+    /**
+     * Stream-encrypt into a sibling dir that keeps the same filename (EncryptedFile AAD),
+     * then atomically replace the plaintext. Never readBytes() + delete-first.
+     */
     private fun migrateFile(context: Context, file: File) {
-        val plaintext = file.readBytes()
+        val parent = file.parentFile ?: return
+        val stagingDir = File(parent, MIGRATE_DIR).apply { mkdirs() }
+        val tmp = File(stagingDir, file.name)
+        tmp.delete()
         val modified = file.lastModified()
-        file.delete()
-        EncryptedOutputStream(context, file, plaintext.size.toLong(), modified).closeWith(plaintext)
+        val size = file.length()
+        try {
+            FileInputStream(file).use { input ->
+                EncryptedOutputStream(context, tmp, size, modified).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            if (!tmp.renameTo(file)) {
+                val overwritten = file.delete() && tmp.renameTo(file)
+                if (!overwritten) {
+                    error("migrate rename failed for ${file.name}")
+                }
+            }
+            relocateMeta(context, tmp.absolutePath, file.absolutePath)
+        } catch (e: Exception) {
+            tmp.delete()
+            throw e
+        } finally {
+            stagingDir.deleteRecursively()
+        }
     }
 
     private fun encryptedFile(context: Context, file: File): EncryptedFile =
@@ -169,10 +199,13 @@ object HiddenFileCrypto {
         metaFile(context, path).writeText("size=$size\nmodified=$modified\n")
     }
 
-    private fun cacheName(path: String): String =
-        MessageDigest.getInstance("SHA-256")
+    private fun cacheName(path: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
             .digest(path.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
+        val ext = File(path).extension
+        return if (ext.isNotEmpty()) "$digest.$ext" else digest
+    }
 
     private data class FileMeta(val size: Long, val modified: Long)
 

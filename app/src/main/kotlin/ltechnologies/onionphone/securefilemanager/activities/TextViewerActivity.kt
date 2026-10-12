@@ -10,6 +10,7 @@ import ltechnologies.onionphone.securefilemanager.R
 import ltechnologies.onionphone.securefilemanager.databinding.ActivityTextViewerBinding
 import ltechnologies.onionphone.securefilemanager.extensions.sharePaths
 import ltechnologies.onionphone.securefilemanager.extensions.toast
+import ltechnologies.onionphone.securefilemanager.helpers.crypto.HiddenFileCrypto
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,6 +53,11 @@ class TextViewerActivity : BaseAbstractActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onDestroy() {
+        HiddenFileCrypto.clearViewCache(this)
+        super.onDestroy()
     }
 
     companion object {

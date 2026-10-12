@@ -3,9 +3,16 @@ package ltechnologies.onionphone.securefilemanager.storage
 import android.content.Context
 import ltechnologies.onionphone.securefilemanager.models.FileDirItem
 import net.schmizz.sshj.SSHClient
+import net.schmizz.sshj.common.Factory
 import net.schmizz.sshj.sftp.RemoteResourceInfo
 import net.schmizz.sshj.sftp.SFTPClient
+import net.schmizz.sshj.userauth.keyprovider.FileKeyProvider
+import net.schmizz.sshj.userauth.keyprovider.KeyProvider
+import net.schmizz.sshj.userauth.keyprovider.KeyProviderUtil
+import net.schmizz.sshj.userauth.password.PasswordFinder
+import net.schmizz.sshj.userauth.password.PasswordUtils
 import java.io.File
+import java.io.StringReader
 
 object SftpStorage {
     private const val REMOTE_LIST_CAP = 5_000
@@ -82,6 +89,7 @@ object SftpStorage {
     ): T {
         SSHClient().use { ssh ->
             ssh.timeout = CONNECT_TIMEOUT_MS
+            ssh.socketFactory = OnionVpnProxy.socketFactory()
             val port = credentials.port.takeIf { it > 0 } ?: 22
             ssh.addHostKeyVerifier(
                 SftpHostKeyVerifier(context, credentials.host, port, hostKeyPrompt),
@@ -99,23 +107,38 @@ object SftpStorage {
     ) {
         val keyPath = credentials.privateKeyPath
         if (keyPath.isNotEmpty()) {
-            val keyFile = openKeyFile(context, keyPath)
-            ssh.authPublickey(credentials.username, ssh.loadKeys(keyFile.absolutePath))
+            val finder = credentials.password.takeIf { it.isNotEmpty() }
+                ?.let { PasswordUtils.createOneOff(it.toCharArray()) }
+            ssh.authPublickey(credentials.username, loadKeyProvider(ssh, context, keyPath, finder))
         } else {
             ssh.authPassword(credentials.username, credentials.password)
         }
     }
 
-    private fun openKeyFile(context: Context, keyPath: String): File {
-        if (keyPath.startsWith("content://")) {
-            val cache = File(context.cacheDir, "sftp_key").apply { mkdirs() }
-            val dest = File(cache, "id_key")
-            context.contentResolver.openInputStream(android.net.Uri.parse(keyPath))?.use { input ->
-                dest.outputStream().use { output -> input.copyTo(output) }
-            } ?: error("cannot read private key")
-            return dest
+    /** Load from memory so content:// keys are never left in cache. */
+    private fun loadKeyProvider(
+        ssh: SSHClient,
+        context: Context,
+        keyPath: String,
+        finder: PasswordFinder?,
+    ): KeyProvider {
+        val keyText = String(loadKeyBytes(context, keyPath), Charsets.UTF_8)
+        val format = KeyProviderUtil.detectKeyFileFormat(StringReader(keyText), false)
+        val provider = Factory.Named.Util.create(
+            ssh.transport.config.fileKeyProviderFactories,
+            format.toString(),
+        ) as FileKeyProvider? ?: error("unsupported private key format")
+        provider.init(StringReader(keyText), finder)
+        return provider
+    }
+
+    private fun loadKeyBytes(context: Context, keyPath: String): ByteArray {
+        if (!keyPath.startsWith("content://")) {
+            return File(keyPath).readBytes()
         }
-        return File(keyPath)
+        return context.contentResolver.openInputStream(android.net.Uri.parse(keyPath))
+            ?.use { it.readBytes() }
+            ?: error("cannot read private key")
     }
 
     private fun normalizeDir(path: String): String =
@@ -136,6 +159,7 @@ object SftpStorage {
             credentials.username,
             childRemote,
             isDirectory,
+            connectionId = credentials.id,
         )
         return FileDirItem(
             path = virtualPath,
